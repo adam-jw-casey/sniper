@@ -5,6 +5,8 @@ mod tui;
 mod view;
 use view::view;
 
+use crate::controller::Message;
+
 mod model;
 use model::{Model, RunningState};
 
@@ -15,6 +17,7 @@ fn main() -> color_eyre::Result<()> {
     tui::install_panic_hook();
     let mut terminal = tui::init_terminal()?;
     let mut model = Model::default();
+    update(&mut model, Message::UpdateFiles);
 
     while model.running_state != RunningState::Done {
         // Render the current view

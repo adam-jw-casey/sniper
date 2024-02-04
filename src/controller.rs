@@ -1,4 +1,5 @@
 use std::time::Duration;
+use std::fs::read_dir;
 
 use crossterm::event::{self, Event, KeyCode};
 
@@ -7,6 +8,9 @@ use crate::model::{Model, RunningState};
 #[derive(PartialEq)]
 pub enum Message {
     Quit,
+    UpdateFiles,
+    ScrollUp,
+    ScrollDown,
 }
 
 /// Convert Event to Message
@@ -24,6 +28,9 @@ pub fn handle_event(model: &Model) -> color_eyre::Result<Option<Message>> {
 /// Handle keypress events
 fn handle_key(key: event::KeyEvent) -> Option<Message> {
     match key.code {
+        KeyCode::Char('q') => Some(Message::Quit),
+        KeyCode::Up => Some(Message::ScrollUp),
+        KeyCode::Down => Some(Message::ScrollDown),
         _ => None,
     }
 }
@@ -35,6 +42,34 @@ pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
             // You can handle cleanup and exit here
             model.running_state = RunningState::Done;
         }
+        Message::UpdateFiles => {
+            model.file_list.files = get_files()
+        },
+        Message::ScrollUp => {
+            let selected = model.file_list.state.selected_mut();
+            match selected {
+                Some(i) => *i -= 1,
+                None => *selected = Some(0),
+            }
+        },
+        Message::ScrollDown => {
+            let selected = model.file_list.state.selected_mut();
+            match selected {
+                Some(i) => *i += 1,
+                None => *selected = Some(0),
+            }
+        },
     };
     None
+}
+/// Impurity:
+///     I/O - reads file names
+///     Panics
+///
+// TODO should return a result
+pub fn get_files() -> Vec<String> {
+    read_dir(".")
+        .expect("fails on IO error")
+        .map(|entry| entry.expect("fails on IO error").file_name().to_string_lossy().to_string())
+        .collect()
 }
