@@ -1,27 +1,15 @@
+#[warn(clippy::pedantic)]
+
 mod tui;
 
-use std::time::Duration;
+mod view;
+use view::view;
 
-use crossterm::event::{self, Event, KeyCode};
-// cargo add anyhow crossterm ratatui
-use ratatui::{prelude::*, widgets::*};
+mod model;
+use model::{Model, RunningState};
 
-#[derive(Debug, Default)]
-struct Model {
-    running_state: RunningState,
-}
-
-#[derive(Debug, Default, PartialEq, Eq)]
-enum RunningState {
-    #[default]
-    Running,
-    Done,
-}
-
-#[derive(PartialEq)]
-enum Message {
-    Quit,
-}
+mod controller;
+use controller::{handle_event, update};
 
 fn main() -> color_eyre::Result<()> {
     tui::install_panic_hook();
@@ -43,42 +31,4 @@ fn main() -> color_eyre::Result<()> {
 
     tui::restore_terminal()?;
     Ok(())
-}
-
-/// Render the tui based on the model
-fn view(model: &mut Model, f: &mut Frame) {
-    f.render_widget(
-        todo!(),
-        f.size(),
-    );
-}
-
-/// Convert Event to Message
-fn handle_event(model: &Model) -> color_eyre::Result<Option<Message>> {
-    if event::poll(Duration::from_millis(250))? {
-        if let Event::Key(key) = event::read()? {
-            if key.kind == event::KeyEventKind::Press {
-                return Ok(handle_key(key));
-            }
-        }
-    }
-    Ok(None)
-}
-
-/// Handle keypress events
-fn handle_key(key: event::KeyEvent) -> Option<Message> {
-    match key.code {
-        _ => None,
-    }
-}
-
-/// Update the model based on a message
-fn update(model: &mut Model, msg: Message) -> Option<Message> {
-    match msg {
-        Message::Quit => {
-            // You can handle cleanup and exit here
-            model.running_state = RunningState::Done;
-        }
-    };
-    None
 }
