@@ -1,17 +1,8 @@
 #[deny(clippy::pedantic)]
 
-mod tui;
-
-mod view;
-use view::view;
-
-use crate::controller::Message;
-
-mod model;
-use model::{Model, RunningState};
-
-mod controller;
-use controller::{handle_event, update};
+use ratatelm::{
+    view, Model, RunningState, handle_event, update, Message,
+};
 
 fn main() -> color_eyre::Result<()> {
     tui::install_panic_hook();
