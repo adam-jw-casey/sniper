@@ -367,6 +367,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ratatelm"
+version = "0.1.0"
+dependencies = [
+ "color-eyre",
+ "crossterm",
+ "ratatui",
+]
+
+[[package]]
 name = "ratatui"
 version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -573,15 +582,6 @@ dependencies = [
  "sharded-slab",
  "thread_local",
  "tracing-core",
-]
-
-[[package]]
-name = "tui_filepicker"
-version = "0.1.0"
-dependencies = [
- "color-eyre",
- "crossterm",
- "ratatui",
 ]
 
 [[package]]
