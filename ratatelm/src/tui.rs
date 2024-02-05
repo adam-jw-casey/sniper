@@ -7,15 +7,16 @@ use crossterm::{
 };
 use ratatui::prelude::*;
 use std::{io::stdout, panic};
+use anyhow::Result;
 
-pub fn init_terminal() -> color_eyre::Result<Terminal<impl Backend>> {
+pub fn init_terminal() -> Result<Terminal<impl Backend>> {
     enable_raw_mode()?;
     stdout().execute(EnterAlternateScreen)?;
     let terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
     Ok(terminal)
 }
 
-pub fn restore_terminal() -> color_eyre::Result<()> {
+pub fn restore_terminal() -> Result<()> {
     stdout().execute(LeaveAlternateScreen)?;
     disable_raw_mode()?;
     Ok(())
