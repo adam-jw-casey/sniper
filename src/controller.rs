@@ -28,9 +28,9 @@ pub fn handle_event(model: &Model) -> color_eyre::Result<Option<Message>> {
 /// Handle keypress events
 fn handle_key(key: event::KeyEvent) -> Option<Message> {
     match key.code {
-        KeyCode::Char('q') => Some(Message::Quit),
-        KeyCode::Up => Some(Message::ScrollUp),
-        KeyCode::Down => Some(Message::ScrollDown),
+        KeyCode::Char('q')  => Some(Message::Quit),
+        KeyCode::Up         => Some(Message::ScrollUp),
+        KeyCode::Down       => Some(Message::ScrollDown),
         _ => None,
     }
 }
@@ -39,7 +39,6 @@ fn handle_key(key: event::KeyEvent) -> Option<Message> {
 pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
     match msg {
         Message::Quit => {
-            // You can handle cleanup and exit here
             model.running_state = RunningState::Done;
         }
         Message::UpdateFiles => {
