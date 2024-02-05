@@ -1,20 +1,22 @@
 use ratatui::widgets::ListState;
 
-#[derive(Debug, Default)]
-pub struct Model {
-    pub running_state: RunningState,
+#[derive(Debug)]
+pub struct Sniper {
     pub file_list: FileList,
+    pub running: bool,
+}
+
+impl Default for Sniper {
+    fn default() -> Self {
+        Sniper {
+            file_list: FileList::default(),
+            running: true,
+        }
+    }
 }
 
 #[derive(Debug, Default)]
 pub struct FileList {
     pub files: Vec<String>,
     pub state: ListState,
-}
-
-#[derive(Debug, Default, PartialEq, Eq)]
-pub enum RunningState {
-    #[default]
-    Running,
-    Done,
 }

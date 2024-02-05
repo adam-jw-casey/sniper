@@ -3,7 +3,11 @@ use std::fs::read_dir;
 
 use crossterm::event::{self, Event, KeyCode};
 
-use crate::model::{Model, RunningState};
+use anyhow::Result;
+
+use ratatelm::App;
+
+use crate::model::Sniper;
 
 #[derive(PartialEq)]
 pub enum Message {
@@ -14,7 +18,7 @@ pub enum Message {
 }
 
 /// Convert Event to Message
-pub fn handle_event(model: &Model) -> color_eyre::Result<Option<Message>> {
+pub fn handle_event(model: &Sniper) -> Result<Option<Message>> {
     if event::poll(Duration::from_millis(250))? {
         if let Event::Key(key) = event::read()? {
             if key.kind == event::KeyEventKind::Press {
@@ -36,10 +40,10 @@ fn handle_key(key: event::KeyEvent) -> Option<Message> {
 }
 
 /// Update the model based on a message
-pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
+pub fn update(model: &mut Sniper, msg: Message) -> Option<Message> {
     match msg {
         Message::Quit => {
-            model.running_state = RunningState::Done;
+            model.set_running(false)
         }
         Message::UpdateFiles => {
             model.file_list.files = get_files()
