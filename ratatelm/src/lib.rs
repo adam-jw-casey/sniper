@@ -1,16 +1,21 @@
 #[deny(clippy::pedantic)]
 
 mod tui;
+pub mod widgets;
 
 use anyhow::Result;
 use ratatui::prelude::Frame;
 
 pub trait App <Message> {
+    /// Check if the app is still running or should quit
     fn is_running(&self) -> bool;
+
     /// Convert Event to Message
-    fn handle_event(&self) -> Result<Option<Message>>;
+    fn handle_event(&mut self) -> Result<Option<Message>>;
+
     /// Update the model based on a message
     fn update(&mut self, msg: Message) -> Option<Message>;
+
     /// Render the tui based on the model
     // TODO I don't like that state is mutable here, but that's how ratatui renders stateful widgets
     fn view(&mut self, f: &mut Frame);

@@ -19,7 +19,7 @@ impl App<Message> for Sniper {
         self.running
     }
 
-    fn handle_event(&self) -> Result<Option<Message>> {
+    fn handle_event(&mut self) -> Result<Option<Message>> {
         handle_event(self)
     }
 
@@ -34,8 +34,6 @@ impl App<Message> for Sniper {
 
 fn main() {
     let mut app = Sniper::default();
-
-    app.update(Message::UpdateFiles);
 
     app.run().expect("This should be fine");
 }
