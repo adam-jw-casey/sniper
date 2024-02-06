@@ -19,10 +19,6 @@ impl App<Message> for Sniper {
         self.running
     }
 
-    fn set_running(&mut self, running: bool) {
-        self.running = running;
-    }
-
     fn handle_event(&self) -> Result<Option<Message>> {
         handle_event(self)
     }

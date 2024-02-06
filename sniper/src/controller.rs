@@ -43,7 +43,7 @@ fn handle_key(key: event::KeyEvent) -> Option<Message> {
 pub fn update(model: &mut Sniper, msg: Message) -> Option<Message> {
     match msg {
         Message::Quit => {
-            model.set_running(false)
+            model.running = false;
         }
         Message::UpdateFiles => {
             model.file_list.files = get_files()

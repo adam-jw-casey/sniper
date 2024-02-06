@@ -15,8 +15,6 @@ pub trait App <Message> {
     // TODO I don't like that state is mutable here, but that's how ratatui renders stateful widgets
     fn view(&mut self, f: &mut Frame);
 
-    fn set_running(&mut self, running: bool);
-
     fn run (&mut self) -> Result<()>{
         tui::install_panic_hook();
         let mut terminal = tui::init_terminal().expect("Should be able to initialize terminal");
