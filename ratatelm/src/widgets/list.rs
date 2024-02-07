@@ -27,7 +27,7 @@ pub struct List<T> {
 }
 
 impl <T> List <T> {
-    pub fn new(elems: Vec<T>, title: String) -> Self {
+    #[must_use] pub fn new(elems: Vec<T>, title: String) -> Self {
         Self {
             elems,
             title,
@@ -48,7 +48,7 @@ for<'a> T: Into<ListItem<'a>> + Clone
                 .repeat_highlight_symbol(true),
             area,
             &mut self.state,
-        )
+        );
     }
 
     fn handle_key(&mut self, e: KeyEvent) -> Option<KeyEvent> {
@@ -64,7 +64,8 @@ for<'a> T: Into<ListItem<'a>> + Clone
             KeyCode::Down => {
                 let selected = self.state.selected_mut();
                 match selected {
-                    Some(i) => *i = min(*i+1, self.elems.len() - 1), // don't scroll below the number of items
+                    // don't scroll below the number of items
+                    Some(i) => *i = min(*i+1, self.elems.len() - 1),
                     None => *selected = Some(0),
                 };
                 None

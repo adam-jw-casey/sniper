@@ -19,7 +19,7 @@ pub trait Widget {
 }
 
 /// This is a stateless implementation of the custom widget trait
-/// that essentially passes through ratatui::Widget.
+/// that essentially passes through `ratatui::Widget`.
 impl <T: BaseWidget + Clone> Widget for T {
     fn render(&mut self, area: Rect, frame: &mut Frame) {
         frame.render_widget(self.clone(), area);

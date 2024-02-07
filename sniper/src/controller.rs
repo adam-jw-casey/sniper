@@ -6,14 +6,14 @@ use crate::model::Sniper;
 
 use anyhow::Result;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub enum Message {
     Quit,
     UpdateFiles,
 }
 
 /// Handle keypress events
-pub fn handle_key(key: event::KeyEvent) -> Option<Message> {
+pub const fn handle_key(key: event::KeyEvent) -> Option<Message> {
     match key.code {
         KeyCode::Char('q') => Some(Message::Quit),
         KeyCode::Char('r') => Some(Message::UpdateFiles),
@@ -28,7 +28,7 @@ pub fn update(model: &mut Sniper, msg: Message) -> Option<Message> {
             model.running = false;
         }
         Message::UpdateFiles => {
-            model.file_list.elems = get_files().expect("Fails on I/O errors")
+            model.file_list.elems = get_files().expect("Fails on I/O errors");
         }
     };
     None
