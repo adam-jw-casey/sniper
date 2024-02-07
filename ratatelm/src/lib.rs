@@ -1,5 +1,3 @@
-#[deny(clippy::pedantic)]
-
 mod tui;
 pub mod widgets;
 
