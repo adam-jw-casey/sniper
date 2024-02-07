@@ -15,7 +15,8 @@ pub enum Message {
 /// Handle keypress events
 pub fn handle_key(key: event::KeyEvent) -> Option<Message> {
     match key.code {
-        KeyCode::Char('q')  => Some(Message::Quit),
+        KeyCode::Char('q') => Some(Message::Quit),
+        KeyCode::Char('r') => Some(Message::UpdateFiles),
         _ => None,
     }
 }
