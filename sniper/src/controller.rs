@@ -4,6 +4,8 @@ use crossterm::event::{self, KeyCode};
 
 use crate::model::Sniper;
 
+use anyhow::Result;
+
 #[derive(PartialEq)]
 pub enum Message {
     Quit,
@@ -25,7 +27,7 @@ pub fn update(model: &mut Sniper, msg: Message) -> Option<Message> {
             model.running = false;
         }
         Message::UpdateFiles => {
-            model.file_list.elems = get_files()
+            model.file_list.elems = get_files().expect("Fails on I/O errors")
         }
     };
     None
@@ -35,10 +37,8 @@ pub fn update(model: &mut Sniper, msg: Message) -> Option<Message> {
 ///     I/O - reads file names
 ///     Panics
 ///
-// TODO should return a result
-pub fn get_files() -> Vec<String> {
-    read_dir(".")
-        .expect("fails on IO error")
-        .map(|entry| entry.expect("fails on IO error").file_name().to_string_lossy().to_string())
+pub fn get_files() -> Result<Vec<String>> {
+    read_dir(".")?
+        .map(|entry| Ok(entry?.file_name().to_string_lossy().to_string()))
         .collect()
 }
