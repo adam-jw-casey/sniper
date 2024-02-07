@@ -13,6 +13,7 @@ use ratatui::widgets::{
     Borders,
 };
 
+use std::cmp::min;
 use crossterm::event::{KeyEvent, KeyCode};
 
 pub trait Widget {
@@ -52,7 +53,7 @@ impl <T> List <T> {
     }
 }
 
-impl <T> Widget  for List <T> 
+impl <T> Widget for List <T>
 where
 for<'a> T: Into<ListItem<'a>> + Clone
 {
@@ -72,7 +73,7 @@ for<'a> T: Into<ListItem<'a>> + Clone
             KeyCode::Up => {
                 let selected = self.state.selected_mut();
                 match selected {
-                    Some(i) => *i -= 1,
+                    Some(i) => *i = i.saturating_sub(1), // don't go below 0
                     None => *selected = Some(0),
                 };
                 None
@@ -80,12 +81,12 @@ for<'a> T: Into<ListItem<'a>> + Clone
             KeyCode::Down => {
                 let selected = self.state.selected_mut();
                 match selected {
-                    Some(i) => *i += 1,
+                    Some(i) => *i = min(*i+1, self.elems.len() - 1), // don't scroll below the number of items
                     None => *selected = Some(0),
                 };
                 None
             },
-            _ => Some(e)
+            _ => Some(e) // Let the next widget handle the keypress
         }
     }
 }
