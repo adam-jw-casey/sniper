@@ -22,7 +22,7 @@ impl App<Message> for Sniper {
     }
 
     fn view(&mut self, f: &mut Frame) {
-        view(self, f)
+        view(self, f);
     }
 
     fn handle_key(key: event::KeyEvent) -> Option<Message> {

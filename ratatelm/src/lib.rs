@@ -30,6 +30,9 @@ pub trait App <Message> {
 
     /// Convert Event to Message
     /// The file list gets first dibs to consume keypress events
+    ///
+    /// # Errors
+    /// Returns `Err` when unable to read event
     fn handle_event(&mut self) -> Result<Option<Message>> {
         if !event::poll(Duration::from_millis(250))? {
             return Ok(None)
@@ -38,17 +41,14 @@ pub trait App <Message> {
         if let Event::Key(key) = event::read()? {
             if key.kind == event::KeyEventKind::Press {
                 let mut maybe_key = Some(key);
-                for w in self.focused_widgets().iter_mut() {
+                for w in &mut self.focused_widgets() {
                     match maybe_key {
                         Some(key) => {maybe_key = w.handle_key(key);},
                         None => break,
                     }
                 }
 
-                Ok(match maybe_key {
-                    Some(key) => Self::handle_key(key),
-                    None => None,
-                })
+                Ok(maybe_key.and_then(|key| Self::handle_key(key)))
             // TODO The next few lines do not spark joy
             } else {
                 Ok(None)
@@ -58,6 +58,10 @@ pub trait App <Message> {
         }
     }
 
+    /// Runs the application to termination or panic
+    ///
+    /// # Errors
+    /// Passes through errors from `self.view()` and `self.handle_event()`
     fn run (&mut self) -> Result<()>{
         tui::install_panic_hook();
         let mut terminal = tui::init_terminal().expect("Should be able to initialize terminal");

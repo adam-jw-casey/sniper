@@ -9,7 +9,7 @@ pub struct Sniper {
 
 impl Default for Sniper {
     fn default() -> Self {
-        Sniper {
+        Self {
             file_list: List::new(
                 controller::get_files().expect("Fails on I/O error"),
                 "Files".into(),
