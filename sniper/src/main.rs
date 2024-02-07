@@ -1,5 +1,3 @@
-#[deny(clippy::pedantic)]
-
 mod model;
 use model::Sniper;
 
