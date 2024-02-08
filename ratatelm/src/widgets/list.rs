@@ -37,12 +37,12 @@ pub struct List<Elem, Message> {
 
 impl <Elem, Message> List<Elem, Message> {
     /// Create a new `List` with the passed elements and title
-    #[must_use] pub fn new (elems: Vec<Elem>, title: String) -> Self {
+    #[must_use] pub fn new (elems: Vec<Elem>, title: String, select_message: Option<Box<dyn Fn(Elem) -> Message>> ) -> Self {
         Self {
             elems,
             title,
             state: ListState::default(),
-            select_message: None,
+            select_message,
         }
     }
 
@@ -67,7 +67,7 @@ for<'a> Elem: Into<ListItem<'a>> + Clone
         );
     }
 
-    fn handle_key(&mut self, e: KeyEvent, on_err: Box<dyn Fn(String) -> Message>) -> Option<EventOrMessage<Message>> {
+    fn handle_key (&mut self, e: KeyEvent, on_err: Box<dyn Fn(String) -> Message>) -> Option<EventOrMessage<Message>> {
         match e.code {
             KeyCode::Up => {
                 let selected = self.state.selected_mut();
