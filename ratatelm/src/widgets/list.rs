@@ -32,6 +32,7 @@ pub struct List<Elem, Message> {
     /// Called with the single argument of the item selected
     #[allow(clippy::type_complexity)]
     select_message: Option<Box<dyn Fn(Elem) -> Message>>,
+    err_message:    Option<Box<dyn Fn(String) -> Message>>,
     state: ListState,
 }
 
@@ -43,12 +44,18 @@ impl <Elem, Message> List<Elem, Message> {
             title,
             state: ListState::default(),
             select_message: None,
+            err_message: None,
         }
     }
 
-    /// Set a callback
+    /// Set a callback for selecting an item
     pub fn on_select (&mut self, select_message: impl Fn(Elem) -> Message + 'static) {
         self.select_message = Some(Box::new(select_message));
+    }
+
+    /// Set a callback for error messages
+    pub fn on_err(&mut self, err_message: impl Fn(String) -> Message + 'static) {
+        self.err_message = Some(Box::new(err_message));
     }
 }
 
@@ -72,7 +79,8 @@ for<'a> Elem: Into<ListItem<'a>> + Clone
             KeyCode::Up => {
                 let selected = self.state.selected_mut();
                 match selected {
-                    Some(i) => *i = i.saturating_sub(1), // don't go below 0
+                    // don't go below 0
+                    Some(i) => *i = i.saturating_sub(1),
                     None => *selected = Some(0),
                 };
                 None
@@ -87,13 +95,19 @@ for<'a> Elem: Into<ListItem<'a>> + Clone
                 None
             },
             KeyCode::Enter => {
-                match &self.select_message {
-                    Some(cb) => match self.state.selected() {
-                        Some(index) => Some(EventOrMessage::Message(cb(self.elems[index].clone()))),
-                        None => unimplemented!("TBD what to do if the user presses enter with no item selected"),
-                    },
-                    None => None,
-                }
+                // If there is no selection handler, nothing to do
+                self.select_message.as_ref().and_then(
+                    // If nothing is selected, warn the user if possible
+                    |select| self.state.selected().map_or_else(
+                        // If there is no defined error handler, print with the dbg! macro
+                        || self.err_message.as_ref()
+                            .map_or_else(
+                                || {dbg!("No item selected and no error handler given"); None},
+                                |err| Some(EventOrMessage::Message(err("No item selected".into()))),
+                            ),
+                        |index| Some(EventOrMessage::Message(select(self.elems[index].clone()))),
+                    )
+                )
             }
             _ => Some(EventOrMessage::Event(e)) // Let the next widget handle the keypress
         }
@@ -107,6 +121,7 @@ impl <Elem: std::fmt::Debug, Message> std::fmt::Debug for List<Elem, Message> {
             .field("title", &self.title)
             .field("state", &self.state)
             .field("select_message", &self.select_message.as_ref().map(|_f| "Anonymous function"))
+            .field("err_message", &self.select_message.as_ref().map(|_f| "Anonymous function"))
             .finish()
     }
 }
