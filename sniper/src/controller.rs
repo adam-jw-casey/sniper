@@ -55,5 +55,6 @@ pub fn update(model: &mut Sniper, msg: Message) -> Option<Message> {
 pub fn get_files() -> Result<Vec<String>> {
     read_dir(".")?
         .map(|entry| Ok(entry?.file_name().to_string_lossy().to_string()))
+        .chain([".".into(), "..".into()].map(Ok))
         .collect()
 }
