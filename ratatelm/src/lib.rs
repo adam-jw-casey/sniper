@@ -1,5 +1,9 @@
+//! `ratatelm` is an [elm](https://guide.elm-lang.org/architecture/)-like framework based on [ratatui](https://ratatui.rs/)
+
 mod tui;
+/// Contains the `Widget` trait and all customs widgets defined in ratatelm
 pub mod widgets;
+
 
 use widgets::Widget;
 
@@ -9,6 +13,10 @@ use ratatui::prelude::Frame;
 use crossterm::event::{self, Event};
 use std::time::Duration;
 
+/// The `App` trait is the entry point to a `ratatelm` application.
+///
+/// To use, implement `App` for your type, then, in you main function, initialize your `App` and
+/// call `run`
 pub trait App <Message> {
     /// Check if the app is still running or should quit
     fn is_running(&self) -> bool;

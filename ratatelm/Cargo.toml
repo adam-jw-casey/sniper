@@ -12,6 +12,9 @@ crossterm = "0.27.0"
 ratatui = "0.26.0"
 [lib]
 
+[lints.rust]
+missing_docs = "warn"
+
 [lints.clippy]
 pedantic = "warn"
 nursery = "warn"
