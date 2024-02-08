@@ -9,7 +9,7 @@ use anyhow::Result;
 #[derive(PartialEq, Eq, Clone)]
 pub enum Message {
     Quit,
-    UpdateFiles,
+    OpenDir(&'static str),
     OpenFile(String),
     Error(String),
 }
@@ -18,7 +18,7 @@ pub enum Message {
 pub const fn handle_key(key: event::KeyEvent) -> Option<Message> {
     match key.code {
         KeyCode::Char('q') => Some(Message::Quit),
-        KeyCode::Char('r') => Some(Message::UpdateFiles),
+        KeyCode::Char('r') => Some(Message::OpenDir(".")),
         _ => None,
     }
 }
@@ -27,7 +27,7 @@ pub const fn handle_key(key: event::KeyEvent) -> Option<Message> {
 ///
 /// # Impurity
 /// `Quit`        - terminates the program
-/// `UpdateFiles` - modifies model and can panic
+/// `OpenDir`     - modifies model and can panic
 /// `OpenFile`    - interacts with external applications
 /// `Error`       - displays information to the user
 pub fn update(model: &mut Sniper, msg: Message) -> Option<Message> {
@@ -36,15 +36,23 @@ pub fn update(model: &mut Sniper, msg: Message) -> Option<Message> {
             model.running = false;
             None
         }
-        Message::UpdateFiles => {
-            model.file_list.elems = get_files().expect("Fails on I/O errors");
-            None
+        Message::OpenDir(dir_name) => {
+            match get_files(dir_name){
+                Ok(files) => {
+                    model.file_list.elems = files;
+                    None
+                },
+                Err(e) => Some(Message::Error(e.to_string())),
+            }
         }
         Message::OpenFile(file_name) => match opener::open(file_name) {
             Ok(()) => None,
             Err(e) => Some(Message::Error(e.to_string())),
         },
-        Message::Error(err_string) => {dbg!(format!("{err_string} - you need to write a better error handler")); None},
+        Message::Error(err_string) => {
+            dbg!(format!("{err_string}"));
+            None
+        },
     }
 }
 
@@ -52,9 +60,12 @@ pub fn update(model: &mut Sniper, msg: Message) -> Option<Message> {
 ///     I/O - reads file names
 ///     Panics
 ///
-pub fn get_files() -> Result<Vec<String>> {
-    read_dir(".")?
-        .map(|entry| Ok(entry?.file_name().to_string_lossy().to_string()))
-        .chain([".".into(), "..".into()].map(Ok))
+pub fn get_files(path: &str) -> Result<Vec<String>> {
+    [".".into(), "..".into()].map(Ok)
+        .into_iter()
+        .chain(
+            read_dir(path)?
+                .map(|entry| Ok(entry?.file_name().to_string_lossy().to_string()))
+        )
         .collect()
 }

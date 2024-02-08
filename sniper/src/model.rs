@@ -1,5 +1,6 @@
 use ratatelm::widgets::List;
-use crate::{controller, Message};
+use ratatelm::App;
+use crate::Message;
 
 #[derive(Debug)]
 pub struct Sniper {
@@ -8,13 +9,19 @@ pub struct Sniper {
 }
 
 impl Default for Sniper {
+    /// # Impurity
+    /// - Performs file I/O via `get_file()`
     fn default() -> Self {
-        Self {
+        let mut new = Self {
             file_list: List::new(
-                controller::get_files().expect("Fails on I/O error"),
-                "Files".into(),
+               vec![],
+               "Files".into(),
            ),
             running: true,
-        }
+        };
+
+        new.update(Message::OpenDir(".".into()));
+
+        new
     }
 }
