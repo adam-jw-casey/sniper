@@ -9,6 +9,8 @@ use ratatui::prelude::{
 
 use crossterm::event::KeyEvent;
 
+/// The `Widget` trait allows a type to be rendered and to handle keypress events within an `App`
+/// application. It is automatically implemented for all `ratatui::widgets::Widget` types.
 pub trait Widget {
     /// Render the widget to the screen and update internal state as necessary
     fn render(&mut self, area: Rect, frame: &mut Frame);
