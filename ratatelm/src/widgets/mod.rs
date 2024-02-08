@@ -25,7 +25,7 @@ pub trait Widget <Message> {
     /// Handle keypress events. If there is no reason to consume the event, it should be returned
     /// wrapped in `Some`.
     /// Otherwise, `None` should be returned
-    fn handle_key(&mut self, e: KeyEvent) -> Option<EventOrMessage<Message>>;
+    fn handle_key(&mut self, e: KeyEvent, on_err: Box<dyn Fn(String) -> Message>) -> Option<EventOrMessage<Message>>;
 }
 
 /// This is a stateless implementation of the custom widget trait
@@ -36,5 +36,5 @@ impl <T: BaseWidget + Clone, Message> Widget <Message> for T {
     }
 
     /// Stateless, so this is noop
-    fn handle_key(&mut self, _: KeyEvent) -> Option<EventOrMessage<Message>> { None }
+    fn handle_key(&mut self, _: KeyEvent, _on_err: Box<dyn Fn(String) -> Message>) -> Option<EventOrMessage<Message>> { None }
 }

@@ -32,7 +32,6 @@ pub struct List<Elem, Message> {
     /// Called with the single argument of the item selected
     #[allow(clippy::type_complexity)]
     select_message: Option<Box<dyn Fn(Elem) -> Message>>,
-    err_message:    Option<Box<dyn Fn(String) -> Message>>,
     state: ListState,
 }
 
@@ -44,18 +43,12 @@ impl <Elem, Message> List<Elem, Message> {
             title,
             state: ListState::default(),
             select_message: None,
-            err_message: None,
         }
     }
 
     /// Set a callback for selecting an item
     pub fn on_select (&mut self, select_message: impl Fn(Elem) -> Message + 'static) {
         self.select_message = Some(Box::new(select_message));
-    }
-
-    /// Set a callback for error messages
-    pub fn on_err(&mut self, err_message: impl Fn(String) -> Message + 'static) {
-        self.err_message = Some(Box::new(err_message));
     }
 }
 
@@ -74,7 +67,7 @@ for<'a> Elem: Into<ListItem<'a>> + Clone
         );
     }
 
-    fn handle_key(&mut self, e: KeyEvent) -> Option<EventOrMessage<Message>> {
+    fn handle_key(&mut self, e: KeyEvent, on_err: Box<dyn Fn(String) -> Message>) -> Option<EventOrMessage<Message>> {
         match e.code {
             KeyCode::Up => {
                 let selected = self.state.selected_mut();
@@ -100,11 +93,7 @@ for<'a> Elem: Into<ListItem<'a>> + Clone
                     // If nothing is selected, warn the user if possible
                     |select| self.state.selected().map_or_else(
                         // If there is no defined error handler, print with the dbg! macro
-                        || self.err_message.as_ref()
-                            .map_or_else(
-                                || {dbg!("No item selected and no error handler given"); None},
-                                |err| Some(EventOrMessage::Message(err("No item selected".into()))),
-                            ),
+                        || Some(EventOrMessage::Message(on_err("No item selected".into()))),
                         |index| Some(EventOrMessage::Message(select(self.elems[index].clone()))),
                     )
                 )
