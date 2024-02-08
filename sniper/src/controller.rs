@@ -44,7 +44,7 @@ pub fn update(model: &mut Sniper, msg: Message) -> Option<Message> {
             Ok(()) => None,
             Err(e) => Some(Message::Error(e.to_string())),
         },
-        Message::Error(_err_string) => todo!(),
+        Message::Error(err_string) => {dbg!(format!("{err_string} - you need to write a better error handler")); None},
     }
 }
 

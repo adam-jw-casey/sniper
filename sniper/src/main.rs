@@ -37,6 +37,7 @@ impl App<Message> for Sniper {
 fn main() {
     let mut app = Sniper::default();
     app.file_list.on_select(Message::OpenFile);
+    app.file_list.on_err(Message::Error);
 
     app.run().expect("This should be fine");
 }
