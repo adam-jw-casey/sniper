@@ -29,13 +29,14 @@ impl App<Message> for Sniper {
         handle_key(key)
     }
 
-    fn focused_widgets(&mut self) -> Vec<&mut dyn ratatelm::widgets::Widget> {
+    fn focused_widgets(&mut self) -> Vec<&mut dyn ratatelm::widgets::Widget<Message>> {
         vec![&mut self.file_list]
     }
 }
 
 fn main() {
     let mut app = Sniper::default();
+    app.file_list.on_select(Message::OpenFile);
 
     app.run().expect("This should be fine");
 }
