@@ -35,6 +35,10 @@ pub trait App <Message> {
     /// the text box) is at the beginning of the returned Vec
     fn focused_widgets(&mut self) -> Vec<&mut dyn Widget<Message>>;
 
+    /// This function is called when a minor error occurs that the user should be notified of.
+    /// It generates a message that will be handled by the application as normal.
+    fn on_err(s: String) -> Message;
+
     /// Convert Event to Message
     ///
     /// # Errors
@@ -63,7 +67,7 @@ pub trait App <Message> {
             for w in &mut self.focused_widgets() {
                 match maybe_key {
                     Some(key) => {
-                        maybe_key = match w.handle_key(key){
+                        maybe_key = match w.handle_key(key, Box::new(|s| {Self::on_err(s)})){
                             Some(e_or_m) => match e_or_m {
                                 // If the widget's `handle_key` returned a key event, continue
                                 // processing

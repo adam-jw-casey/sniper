@@ -32,12 +32,15 @@ impl App<Message> for Sniper {
     fn focused_widgets(&mut self) -> Vec<&mut dyn ratatelm::widgets::Widget<Message>> {
         vec![&mut self.file_list]
     }
+
+    fn on_err(s: String) -> Message {
+        Message::Error(s)
+    }
 }
 
 fn main() {
     let mut app = Sniper::default();
     app.file_list.on_select(Message::OpenFile);
-    app.file_list.on_err(Message::Error);
 
     app.run().expect("This should be fine");
 }
