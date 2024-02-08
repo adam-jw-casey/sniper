@@ -29,7 +29,7 @@ pub const fn handle_key(key: event::KeyEvent) -> Option<Message> {
 /// `Quit`        - terminates the program
 /// `UpdateFiles` - modifies model and can panic
 /// `OpenFile`    - interacts with external applications
-/// `Error`       - unimplemented, but will display info to user
+/// `Error`       - displays information to the user
 pub fn update(model: &mut Sniper, msg: Message) -> Option<Message> {
     match msg {
         Message::Quit => {
