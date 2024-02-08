@@ -26,10 +26,7 @@ pub const fn handle_key(key: event::KeyEvent) -> Option<Message> {
 /// Update the model based on a message
 ///
 /// # Impurity
-/// `Quit`        - terminates the program
-/// `OpenDir`     - modifies model and can panic
-/// `OpenFile`    - interacts with external applications
-/// `Error`       - displays information to the user
+/// This is (deliberately) the most impure function in this codebase.
 pub fn update(model: &mut Sniper, msg: Message) -> Option<Message> {
     match msg {
         Message::Quit => {
@@ -45,9 +42,9 @@ pub fn update(model: &mut Sniper, msg: Message) -> Option<Message> {
                 Err(e) => Some(Message::Error(e.to_string())),
             }
         }
-        Message::OpenFile(file_name) => match opener::open(file_name) {
-            Ok(()) => None,
-            Err(e) => Some(Message::Error(e.to_string())),
+        Message::OpenFile(file_name) => {
+            opener::open(file_name).err()
+                .map(|e| Message::Error(e.to_string()))
         },
         Message::Error(err_string) => {
             dbg!(format!("{err_string}"));
@@ -58,7 +55,6 @@ pub fn update(model: &mut Sniper, msg: Message) -> Option<Message> {
 
 /// Impurity:
 ///     I/O - reads file names
-///     Panics
 ///
 pub fn get_files(path: &str) -> Result<Vec<String>> {
     [".".into(), "..".into()].map(Ok)
