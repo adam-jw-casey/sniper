@@ -4,13 +4,12 @@ mod tui;
 /// Contains the `Widget` trait and all customs widgets defined in ratatelm
 pub mod widgets;
 
-
-use widgets::Widget;
+use widgets::{Widget, EventOrMessage};
 
 use anyhow::Result;
 use ratatui::prelude::Frame;
 
-use crossterm::event::{self, Event};
+use crossterm::event::{self, Event, KeyEvent};
 use std::time::Duration;
 
 /// The `App` trait is the entry point to a `ratatelm` application.
@@ -34,10 +33,9 @@ pub trait App <Message> {
     /// Get the widget(s) that is(are) focused.
     /// If there are multiple (e.g., a text box inside a frame), the widget on top (in this case,
     /// the text box) is at the beginning of the returned Vec
-    fn focused_widgets(&mut self) -> Vec<&mut dyn Widget>;
+    fn focused_widgets(&mut self) -> Vec<&mut dyn Widget<Message>>;
 
     /// Convert Event to Message
-    /// The file list gets first dibs to consume keypress events
     ///
     /// # Errors
     /// Returns `Err` when unable to read event
@@ -46,24 +44,36 @@ pub trait App <Message> {
             return Ok(None)
         }
 
-        if let Event::Key(key) = event::read()? {
-            if key.kind == event::KeyEventKind::Press {
-                let mut maybe_key = Some(key);
-                for w in &mut self.focused_widgets() {
-                    match maybe_key {
-                        Some(key) => {maybe_key = w.handle_key(key);},
-                        None => break,
-                    }
-                }
-
-                Ok(maybe_key.and_then(|key| Self::handle_key(key)))
-            // TODO The next few lines do not spark joy
-            } else {
-                Ok(None)
-            }
+        Ok(if let Event::Key(key) = event::read()? {
+            self.handle_key_event(key)
         } else {
-            Ok(None)
-        }
+            None
+        })
+    }
+
+    /// Handle key events
+    /// First, pass events to any focused widget(s)
+    /// If the event is not consumed, pass to `self::handle_key`()
+    fn handle_key_event(&mut self, key: KeyEvent) -> Option<Message> {
+        (key.kind == event::KeyEventKind::Press).then_some({
+            let mut maybe_key = Some(key);
+            for w in &mut self.focused_widgets() {
+                match maybe_key {
+                    Some(key) => {
+                        maybe_key = match w.handle_key(key){
+                            Some(e_or_m) => match e_or_m {
+                                EventOrMessage::Event(event) => Some(event),
+                                EventOrMessage::Message(message) => return Some(message),
+                            },
+                            None => None,
+                        }
+                    },
+                    None => break,
+                }
+            }
+
+            maybe_key.and_then(|key| Self::handle_key(key))?
+        })
     }
 
     /// Runs the application to termination or panic
@@ -72,7 +82,8 @@ pub trait App <Message> {
     /// Passes through errors from `self.view()` and `self.handle_event()`
     fn run (&mut self) -> Result<()>{
         tui::install_panic_hook();
-        let mut terminal = tui::init_terminal().expect("Should be able to initialize terminal");
+        let mut terminal = tui::init_terminal()
+            .expect("Should be able to initialize terminal");
 
         while self.is_running() {
             // Render the current view

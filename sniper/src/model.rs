@@ -1,9 +1,9 @@
 use ratatelm::widgets::List;
-use crate::controller;
+use crate::{controller, Message};
 
 #[derive(Debug)]
 pub struct Sniper {
-    pub file_list: List<String>,
+    pub file_list: List<String, Message>,
     pub running: bool,
 }
 

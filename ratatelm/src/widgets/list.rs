@@ -1,4 +1,4 @@
-use super::Widget;
+use super::{Widget,EventOrMessage};
 
 use ratatui::prelude::{
     Frame,
@@ -23,40 +23,38 @@ use std::cmp::min;
 /// This `Widget` can be used to display list of items.
 /// You can scroll up and down with the arrow keys, and optionally select an item with `Enter` if
 /// you set an appropriate callback with `on_select`
-pub struct List<T> {
+pub struct List<Elem, Message> {
     /// The items displayed by the `List`
-    pub elems: Vec<T>,
+    pub elems: Vec<Elem>,
     /// A title to show at the top of the `List`
     pub title: String,
     /// Function called when an item is selected.
     /// Called with the single argument of the item selected
     #[allow(clippy::type_complexity)]
-    select_callback: Option<Box<dyn Fn(&T)>>,
+    select_message: Option<Box<dyn Fn(Elem) -> Message>>,
     state: ListState,
 }
 
-impl <T> List<T> {
+impl <Elem, Message> List<Elem, Message> {
     /// Create a new `List` with the passed elements and title
-    #[must_use] pub fn new (elems: Vec<T>, title: String) -> Self {
+    #[must_use] pub fn new (elems: Vec<Elem>, title: String) -> Self {
         Self {
             elems,
             title,
             state: ListState::default(),
-            select_callback: None,
+            select_message: None,
         }
     }
 
     /// Set a callback
-    #[allow(clippy::return_self_not_must_use)]
-    pub fn on_select<F: Fn(&T) + 'static> (mut self, select_callback: F) -> Self {
-        self.select_callback = Some(Box::new(select_callback));
-        self
+    pub fn on_select (&mut self, select_message: impl Fn(Elem) -> Message + 'static) {
+        self.select_message = Some(Box::new(select_message));
     }
 }
 
-impl <T> Widget for List <T>
+impl <Elem, Message> Widget<Message> for List <Elem, Message>
 where
-for<'a> T: Into<ListItem<'a>> + Clone
+for<'a> Elem: Into<ListItem<'a>> + Clone
 {
     fn render(&mut self, area: Rect, frame: &mut Frame) {
         frame.render_stateful_widget(
@@ -69,7 +67,7 @@ for<'a> T: Into<ListItem<'a>> + Clone
         );
     }
 
-    fn handle_key(&mut self, e: KeyEvent) -> Option<KeyEvent> {
+    fn handle_key(&mut self, e: KeyEvent) -> Option<EventOrMessage<Message>> {
         match e.code {
             KeyCode::Up => {
                 let selected = self.state.selected_mut();
@@ -89,27 +87,26 @@ for<'a> T: Into<ListItem<'a>> + Clone
                 None
             },
             KeyCode::Enter => {
-                match &self.select_callback {
+                match &self.select_message {
                     Some(cb) => match self.state.selected() {
-                        Some(index) => cb(&self.elems[index]),
+                        Some(index) => Some(EventOrMessage::Message(cb(self.elems[index].clone()))),
                         None => unimplemented!("TBD what to do if the user presses enter with no item selected"),
                     },
-                    None => {},
-                };
-                None
+                    None => None,
+                }
             }
-            _ => Some(e) // Let the next widget handle the keypress
+            _ => Some(EventOrMessage::Event(e)) // Let the next widget handle the keypress
         }
     }
 }
 
-impl <T: std::fmt::Debug> std::fmt::Debug for List<T> {
+impl <Elem: std::fmt::Debug, Message> std::fmt::Debug for List<Elem, Message> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("List")
             .field("elems", &self.elems)
             .field("title", &self.title)
             .field("state", &self.state)
-            .field("select_callback", &self.select_callback.as_ref().map(|_f| "Anonymous function"))
+            .field("select_message", &self.select_message.as_ref().map(|_f| "Anonymous function"))
             .finish()
     }
 }
