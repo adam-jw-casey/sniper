@@ -8,7 +8,7 @@ pub struct Sniper {
     pub running: bool,
 }
 
-impl Default for Sniper {
+impl  Default for Sniper {
     /// # Impurity
     /// - Performs file I/O via `get_file()`
     fn default() -> Self {
@@ -16,6 +16,7 @@ impl Default for Sniper {
             file_list: List::new(
                vec![],
                "Files".into(),
+               None,
            ),
             running: true,
         };
