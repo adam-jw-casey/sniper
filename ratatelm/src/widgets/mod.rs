@@ -9,8 +9,11 @@ use ratatui::prelude::{
 
 use crossterm::event::KeyEvent;
 
+/// Simple wrapper for either a `KeyEvent` or user-defined Message type
 pub enum EventOrMessage <Message> {
+    /// Self-explanatory
     Event(KeyEvent),
+    /// Self-explanatory
     Message(Message),
 }
 
