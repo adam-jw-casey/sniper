@@ -57,17 +57,27 @@ pub trait App <Message> {
     fn handle_key_event(&mut self, key: KeyEvent) -> Option<Message> {
         (key.kind == event::KeyEventKind::Press).then_some({
             let mut maybe_key = Some(key);
+
+            // Iterate over any focused widget(s), checking in order if they wish to consume the
+            // key event. This is guaranteed to run at least once.
             for w in &mut self.focused_widgets() {
                 match maybe_key {
                     Some(key) => {
                         maybe_key = match w.handle_key(key){
                             Some(e_or_m) => match e_or_m {
+                                // If the widget's `handle_key` returned a key event, continue
+                                // processing
                                 EventOrMessage::Event(event) => Some(event),
+                                // If the widget's `handle_key` returned a message, we're done
+                                // processing and can return the message.
                                 EventOrMessage::Message(message) => return Some(message),
                             },
+                            // This would be tidier with `Option::map`, but the closure would not
+                            // be able to return from the overall function, which is necessary above.
                             None => None,
                         }
                     },
+                    // If the key event has been consumed, exit the loop
                     None => break,
                 }
             }
