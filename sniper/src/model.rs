@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use ratatelm::widgets::List;
 use ratatelm::App;
 use crate::Message;
@@ -5,10 +7,11 @@ use crate::Message;
 #[derive(Debug)]
 pub struct Sniper {
     pub file_list: List<String, Message>,
+    pub cur_dir: PathBuf,
     pub running: bool,
 }
 
-impl  Default for Sniper {
+impl Default for Sniper {
     /// # Impurity
     /// - Performs file I/O via `get_file()`
     fn default() -> Self {
@@ -18,6 +21,7 @@ impl  Default for Sniper {
                "Files".into(),
                None,
            ),
+           cur_dir: ".".into(),
             running: true,
         };
 

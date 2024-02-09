@@ -40,7 +40,7 @@ impl App<Message> for Sniper {
 
 fn main() {
     let mut app = Sniper::default();
-    app.file_list.on_select(Message::OpenPath);
+    app.file_list.on_select(|s| Message::OpenPath(s.into()));
 
     app.run().expect("This should be fine");
 }
