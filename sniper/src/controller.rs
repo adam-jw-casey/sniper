@@ -1,4 +1,5 @@
 use std::path::{PathBuf, Path};
+use std::env::set_current_dir;
 
 use crossterm::event::{self, KeyCode};
 
@@ -28,8 +29,8 @@ pub fn handle_key (key: event::KeyEvent) -> Option<Message> {
 ///
 /// # Impurity
 /// This is (deliberately) the most impure function in this codebase.
-pub fn update (model: &mut Sniper, msg: Message) -> Option<Message> {
-    match msg {
+pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
+    Ok(match msg {
         Message::Quit => {
             model.running = false;
             None
@@ -44,23 +45,22 @@ pub fn update (model: &mut Sniper, msg: Message) -> Option<Message> {
             })
         },
         Message::OpenFile(file_path) => {
-            opener::open(file_path).err()
-                .map(|e| Message::Error(e.to_string()))
+            opener::open(file_path)?;
+            None
         },
-        Message::OpenDir(dir_name) => {
-            match get_files(&dir_name){
-                Ok(files) => {
-                    model.file_list.elems = files.iter().map(|path_buf| path_buf.to_string_lossy().to_string()).collect();
-                    None
-                },
-                Err(e) => Some(Message::Error(e.to_string())),
-            }
+        Message::OpenDir(dir_path) => {
+            set_current_dir(dir_path)?;
+
+            model.file_list.elems = get_files(Path::new("."))?
+                .iter()
+                .map(|path_buf| path_buf.to_string_lossy().to_string()).collect();
+            None
         },
         Message::Error(err_string) => {
             dbg!(format!("{err_string}"));
             None
         },
-    }
+    })
 }
 
 /// Impurity:

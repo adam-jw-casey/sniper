@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use ratatelm::widgets::List;
 use ratatelm::App;
 use crate::Message;
@@ -7,7 +5,6 @@ use crate::Message;
 #[derive(Debug)]
 pub struct Sniper {
     pub file_list: List<String, Message>,
-    pub cur_dir: PathBuf,
     pub running: bool,
 }
 
@@ -21,11 +18,11 @@ impl Default for Sniper {
                "Files".into(),
                None,
            ),
-           cur_dir: ".".into(),
            running: true,
         };
 
-        new.update(Message::OpenDir(new.cur_dir.clone()));
+        new.update(Message::OpenDir(".".into()))
+            .expect("Should be able to open current directory");
 
         new
     }
