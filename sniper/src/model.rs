@@ -22,10 +22,10 @@ impl Default for Sniper {
                None,
            ),
            cur_dir: ".".into(),
-            running: true,
+           running: true,
         };
 
-        new.update(Message::OpenDir(".".into()));
+        new.update(Message::OpenDir(new.cur_dir.clone()));
 
         new
     }
