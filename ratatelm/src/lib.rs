@@ -24,7 +24,9 @@ pub trait App <Message> {
     fn handle_key(key: event::KeyEvent) -> Option<Message>;
 
     /// Update the model based on a message
-    fn update(&mut self, msg: Message) -> Option<Message>;
+    /// # Errors
+    /// This is implemented by the user.
+    fn update(&mut self, msg: Message) -> Result<Option<Message>>;
 
     /// Render the tui based on the model
     // TODO I don't like that state is mutable here, but that's how ratatui renders stateful widgets
@@ -108,7 +110,10 @@ pub trait App <Message> {
 
             // Process updates as long as they return a non-None message
             while current_msg.is_some() {
-                current_msg = self.update(current_msg.unwrap());
+                current_msg = self
+                    // The unwrap is ok because we've already checked this is some
+                    .update(current_msg.unwrap())
+                    .unwrap_or_else(|e| Some(Self::on_err(e.to_string())));
             }
         }
 

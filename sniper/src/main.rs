@@ -12,12 +12,14 @@ use ratatelm::App;
 use crossterm::event;
 use ratatui::Frame;
 
+use anyhow::Result;
+
 impl App<Message> for Sniper {
     fn is_running(&self) -> bool {
         self.running
     }
 
-    fn update(&mut self, msg: Message) -> Option<Message> {
+    fn update(&mut self, msg: Message) -> Result<Option<Message>> {
         update(self, msg)
     }
 
