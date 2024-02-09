@@ -6,6 +6,7 @@ use crate::Message;
 pub struct Sniper {
     pub file_list: List<String, Message>,
     pub running: bool,
+    pub err_message: String,
 }
 
 impl Default for Sniper {
@@ -19,6 +20,7 @@ impl Default for Sniper {
                None,
            ),
            running: true,
+           err_message: String::new(),
         };
 
         new.update(Message::OpenDir(".".into()))
