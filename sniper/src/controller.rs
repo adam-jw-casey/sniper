@@ -1,5 +1,4 @@
-use std::fs::read_dir;
-use std::path::Path;
+use std::path::{PathBuf, Path};
 
 use crossterm::event::{self, KeyCode};
 
@@ -10,9 +9,9 @@ use anyhow::Result;
 #[derive(PartialEq, Eq, Clone)]
 pub enum Message  {
     Quit,
-    OpenDir(String),
-    OpenFile(String),
-    OpenPath(String),
+    OpenDir(PathBuf),
+    OpenFile(PathBuf),
+    OpenPath(PathBuf),
     Error(String),
 }
 
@@ -20,7 +19,7 @@ pub enum Message  {
 pub fn handle_key (key: event::KeyEvent) -> Option<Message> {
     match key.code {
         KeyCode::Char('q') => Some(Message::Quit),
-        KeyCode::Char('r') => Some(Message::OpenDir(".".to_string())),
+        KeyCode::Char('r') => Some(Message::OpenDir(".".into())),
         _ => None,
     }
 }
@@ -35,15 +34,13 @@ pub fn update (model: &mut Sniper, msg: Message) -> Option<Message> {
             model.running = false;
             None
         },
-        Message::OpenPath(path_str) => {
-            let path = Path::new(&path_str);
-
+        Message::OpenPath(path) => {
             Some(if path.is_dir() {
-                Message::OpenDir(path_str)
+                Message::OpenDir(path)
             } else if path.is_file() {
-                Message::OpenFile(path_str)
+                Message::OpenFile(path)
             } else {
-                Message::Error("Unable to open {path_str} - unknown file type".into())
+                Message::Error("Unable to open {path} - unknown file type".into())
             })
         },
         Message::OpenFile(file_path) => {
@@ -53,7 +50,7 @@ pub fn update (model: &mut Sniper, msg: Message) -> Option<Message> {
         Message::OpenDir(dir_name) => {
             match get_files(&dir_name){
                 Ok(files) => {
-                    model.file_list.elems = files;
+                    model.file_list.elems = files.iter().map(|path_buf| path_buf.to_string_lossy().to_string()).collect();
                     None
                 },
                 Err(e) => Some(Message::Error(e.to_string())),
@@ -69,12 +66,12 @@ pub fn update (model: &mut Sniper, msg: Message) -> Option<Message> {
 /// Impurity:
 ///     I/O - reads file names
 ///
-pub fn get_files(path: &str) -> Result<Vec<String>> {
+pub fn get_files(path: &Path) -> Result<Vec<PathBuf>> {
     [".".into(), "..".into()].map(Ok)
         .into_iter()
         .chain(
-            read_dir(path)?
-                .map(|entry| Ok(entry?.file_name().to_string_lossy().to_string()))
+            path.read_dir()?
+                .map(|entry| Ok(entry?.path()))
         )
         .collect()
 }
