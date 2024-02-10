@@ -670,6 +670,7 @@ dependencies = [
  "anyhow",
  "clap",
  "crossterm",
+ "memchr",
  "opener",
  "ratatelm",
  "ratatui",

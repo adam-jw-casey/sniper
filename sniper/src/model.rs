@@ -5,8 +5,15 @@ use crate::Message;
 #[derive(Debug)]
 pub struct Sniper {
     pub file_list: List<String, Message>,
-    pub running: bool,
-    pub err_message: String,
+    pub mode: SniperMode,
+    pub message: String,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum SniperMode {
+    Navigating,
+    Searching,
+    Quit,
 }
 
 impl Default for Sniper {
@@ -26,8 +33,8 @@ impl Sniper {
                "Files".into(),
                None,
            ),
-           running: true,
-           err_message: String::new(),
+           mode: SniperMode::Navigating,
+           message: String::new(),
         };
 
         new.update(Message::OpenDir(path.into()))

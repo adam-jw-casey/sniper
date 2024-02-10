@@ -1,5 +1,5 @@
 mod model;
-use model::Sniper;
+use model::{Sniper, SniperMode};
 
 mod controller;
 use controller::{update, handle_key, Message};
@@ -26,7 +26,7 @@ struct Args {
 
 impl App<Message> for Sniper {
     fn is_running(&self) -> bool {
-        self.running
+        matches!(self.mode, SniperMode::Quit)
     }
 
     fn update(&mut self, msg: Message) -> Result<Option<Message>> {

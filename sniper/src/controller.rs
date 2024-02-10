@@ -55,7 +55,7 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
             None
         },
         Message::Error(err_string) => {
-            model.err_message = err_string;
+            model.message = err_string;
             None
         },
     })

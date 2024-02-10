@@ -15,5 +15,5 @@ pub fn view(model: &mut Sniper, f: &mut Frame) {
 
     let [main_window, bottom_bar] = vertical.areas(f.size());
     model.file_list.render(main_window, f);
-    Widget::<Message>::render(&mut Paragraph::new(model.err_message.clone()), bottom_bar, f);
+    Widget::<Message>::render(&mut Paragraph::new(model.message.clone()), bottom_bar, f);
 }
