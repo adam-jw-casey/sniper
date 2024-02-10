@@ -41,7 +41,7 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
             } else if path.is_file() {
                 Message::OpenFile(path)
             } else {
-                Message::Error("Unable to open {path} - unknown file type".into())
+                Message::Error(format!("Unable to open {} - unknown file type", path.to_string_lossy()))
             })
         },
         Message::OpenFile(file_path) => {
@@ -53,7 +53,10 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
 
             model.file_list.elems = get_files(Path::new("."))?
                 .iter()
-                .map(|path_buf| path_buf.to_string_lossy().to_string()).collect();
+                .map(|path_buf| {
+                    let raw_s = path_buf.to_string_lossy().to_string();
+                    raw_s.strip_prefix("./").unwrap_or(&raw_s).to_owned() // Strip leading "./", if any
+                }).collect();
             None
         },
         Message::Error(err_string) => {
