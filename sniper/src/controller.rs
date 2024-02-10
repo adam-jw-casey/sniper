@@ -55,7 +55,7 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
                 .iter()
                 .map(|path_buf| {
                     let raw_s = path_buf.to_string_lossy().to_string();
-                    raw_s.strip_prefix("./").unwrap_or(&raw_s).to_owned() // Strip leading "./", if any
+                    raw_s.strip_prefix("./").map(std::borrow::ToOwned::to_owned).unwrap_or(raw_s) // Strip leading "./", if any
                 }).collect();
             None
         },
