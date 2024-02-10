@@ -14,6 +14,16 @@ use ratatui::Frame;
 
 use anyhow::Result;
 
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about=None)]
+struct Args {
+    /// Path to the directory to open in. "." by default
+    #[arg(short, long, default_value=".")]
+    path: String,
+}
+
 impl App<Message> for Sniper {
     fn is_running(&self) -> bool {
         self.running
@@ -41,7 +51,10 @@ impl App<Message> for Sniper {
 }
 
 fn main() {
-    let mut app = Sniper::default();
+
+    let args = Args::parse();
+
+    let mut app = Sniper::new(args.path);
     app.file_list.on_select(|s| Message::OpenPath(s.into()));
 
     app.run().expect("This should be fine");

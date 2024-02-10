@@ -13,6 +13,13 @@ impl Default for Sniper {
     /// # Impurity
     /// - Performs file I/O via `get_file()`
     fn default() -> Self {
+        Self::new(".".into())
+    }
+
+}
+
+impl Sniper {
+    pub fn new(path: String) -> Self {
         let mut new = Self {
             file_list: List::new(
                vec![],
@@ -23,7 +30,7 @@ impl Default for Sniper {
            err_message: String::new(),
         };
 
-        new.update(Message::OpenDir(".".into()))
+        new.update(Message::OpenDir(path.into()))
             .expect("Should be able to open current directory");
 
         new
