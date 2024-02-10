@@ -7,6 +7,9 @@ use controller::{update, handle_key, Message};
 mod view;
 use view::view;
 
+mod widgets;
+use widgets::SearchBar;
+
 use ratatelm::App;
 
 use crossterm::event;
@@ -26,7 +29,7 @@ struct Args {
 
 impl App<Message> for Sniper {
     fn is_running(&self) -> bool {
-        matches!(self.mode, SniperMode::Quit)
+        !matches!(self.mode, SniperMode::Quit)
     }
 
     fn update(&mut self, msg: Message) -> Result<Option<Message>> {
@@ -37,12 +40,16 @@ impl App<Message> for Sniper {
         view(self, f);
     }
 
-    fn handle_key(key: event::KeyEvent) -> Option<Message> {
-        handle_key(key)
+    fn handle_key(&self, key: event::KeyEvent) -> Option<Message> {
+        handle_key(self, key)
     }
 
     fn focused_widgets(&mut self) -> Vec<&mut dyn ratatelm::widgets::Widget<Message>> {
-        vec![&mut self.file_list]
+        match self.mode{
+            SniperMode::Navigating => vec![&mut self.file_list],
+            SniperMode::Searching => vec![&mut self.search_bar],
+            SniperMode::Quit => panic!("App should terminate before reaching here"),
+        }
     }
 
     fn on_err(s: String) -> Message {

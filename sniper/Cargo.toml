@@ -13,6 +13,7 @@ memchr = "2.7.1"
 opener = "0.6.1"
 ratatelm = {path = "../ratatelm"}
 ratatui = "0.26.0"
+tui-input = "0.8.0"
 
 [lints.clippy]
 pedantic = "warn"

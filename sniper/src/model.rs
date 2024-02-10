@@ -1,18 +1,26 @@
 use ratatelm::widgets::List;
 use ratatelm::App;
 use crate::Message;
+use crate::SearchBar;
 
 #[derive(Debug)]
 pub struct Sniper {
     pub file_list: List<String, Message>,
     pub mode: SniperMode,
+    pub search_bar: SearchBar,
     pub message: String,
 }
 
-#[derive(Debug, Copy, Clone)]
+// TODO the Navigating and Searching variants should take String and Input respectively to
+// represent either a message or the contents of the search bar.
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum SniperMode {
+    /// The user is navigating through directories.
+    /// The variant parameter is a message string.
     Navigating,
+    /// The user is searching using the bottom bar.
     Searching,
+    /// The app is terminating
     Quit,
 }
 
@@ -22,7 +30,6 @@ impl Default for Sniper {
     fn default() -> Self {
         Self::new(".".into())
     }
-
 }
 
 impl Sniper {
@@ -34,6 +41,7 @@ impl Sniper {
                None,
            ),
            mode: SniperMode::Navigating,
+           search_bar: SearchBar::default(),
            message: String::new(),
         };
 

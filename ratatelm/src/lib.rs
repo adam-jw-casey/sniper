@@ -21,7 +21,7 @@ pub trait App <Message> {
     fn is_running(&self) -> bool;
 
     /// Handle keypress events
-    fn handle_key(key: event::KeyEvent) -> Option<Message>;
+    fn handle_key(&self, key: event::KeyEvent) -> Option<Message>;
 
     /// Update the model based on a message
     /// # Errors
@@ -88,7 +88,7 @@ pub trait App <Message> {
                 }
             }
 
-            maybe_key.and_then(|key| Self::handle_key(key))?
+            maybe_key.and_then(|key| self.handle_key(key))?
         })
     }
 

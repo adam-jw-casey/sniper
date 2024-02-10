@@ -4,7 +4,7 @@ use std::borrow::ToOwned;
 
 use crossterm::event::{self, KeyCode};
 
-use crate::model::Sniper;
+use crate::model::{Sniper, SniperMode};
 
 use anyhow::Result;
 
@@ -15,14 +15,24 @@ pub enum Message  {
     OpenFile(PathBuf),
     OpenPath(PathBuf),
     Error(String),
+    EnterMode(SniperMode),
 }
 
 /// Handle keypress events
-pub fn handle_key (key: event::KeyEvent) -> Option<Message> {
-    match key.code {
-        KeyCode::Char('q') => Some(Message::Quit),
-        KeyCode::Char('r') => Some(Message::OpenDir(".".into())),
-        _ => None,
+pub fn handle_key (model: &Sniper, key: event::KeyEvent) -> Option<Message> {
+    match &model.mode {
+        SniperMode::Navigating => match key.code {
+            KeyCode::Char('q') => Some(Message::Quit),
+            KeyCode::Char('r') => Some(Message::OpenDir(".".into())),
+            KeyCode::Char('/') => Some(Message::EnterMode(SniperMode::Searching)),
+            _ => None,
+        },
+        // The actual input handling is handled by the SearchBar widget
+        SniperMode::Searching => match key.code {
+            KeyCode::Esc | KeyCode::Enter => Some(Message::EnterMode(SniperMode::Navigating)),
+            _ => None,
+        },
+        SniperMode::Quit => panic!("The app should have already terminated before reaching here"),
     }
 }
 
@@ -33,7 +43,7 @@ pub fn handle_key (key: event::KeyEvent) -> Option<Message> {
 pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
     Ok(match msg {
         Message::Quit => {
-            model.running = false;
+            model.mode = SniperMode::Quit;
             None
         },
         Message::OpenPath(path) => {
@@ -56,6 +66,17 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
         },
         Message::Error(err_string) => {
             model.message = err_string;
+            None
+        },
+        Message::EnterMode(mode) => {
+            model.mode = mode;
+            match mode {
+                SniperMode::Navigating => model.message = String::new(),
+                SniperMode::Searching => model.search_bar.clear(),
+                //Setting the mode is sufficient.
+                //Termination is handled outside this function
+                SniperMode::Quit => {},
+            }
             None
         },
     })
