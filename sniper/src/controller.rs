@@ -51,13 +51,7 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
         },
         Message::OpenDir(dir_path) => {
             set_current_dir(dir_path)?;
-
-            model.file_list.elems = get_files(Path::new("."))?
-                .iter()
-                .map(|path_buf| {
-                    let raw_s = path_buf.to_string_lossy().to_string();
-                    raw_s.strip_prefix("./").map(ToOwned::to_owned).unwrap_or(raw_s) // Strip leading "./", if any
-                }).collect();
+            model.file_list.elems = get_file_names(Path::new("."))?;
             None
         },
         Message::Error(err_string) => {
@@ -67,15 +61,33 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
     })
 }
 
+fn get_file_names(path: &Path) -> Result<Vec<String>> {
+    Ok(get_files(path)?
+        .iter()
+        .map(|pb| file_display(pb))
+        .collect())
+}
+
+/// Convert files to display format
+//
+//This feels like an impl Display
+fn file_display(path: &Path) -> String {
+    let raw_s = path.to_string_lossy().to_string();
+    raw_s.
+        strip_prefix("./")
+        .map(ToOwned::to_owned)
+        .unwrap_or(raw_s)
+}
+
 /// Impurity:
 ///     I/O - reads file names
 ///
-pub fn get_files(path: &Path) -> Result<Vec<PathBuf>> {
+fn get_files(path: &Path) -> Result<Vec<PathBuf>> {
     [".".into(), "..".into()].map(Ok)
         .into_iter()
-        .chain(
-            path.read_dir()?
+            .chain(
+                path.read_dir()?
                 .map(|entry| Ok(entry?.path()))
-        )
-        .collect()
+                )
+            .collect()
 }
