@@ -65,7 +65,8 @@ fn get_file_names(path: &Path) -> Result<Vec<String>> {
     Ok(get_files(path)?
         .iter()
         .map(|pb| file_display(pb))
-        .collect())
+        .collect()
+    )
 }
 
 /// Convert files to display format
@@ -90,4 +91,28 @@ fn get_files(path: &Path) -> Result<Vec<PathBuf>> {
                 .map(|entry| Ok(entry?.path()))
                 )
             .collect()
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::{get_files, get_file_names};
+    use std::path::Path;
+
+    // Get all files in this and surrounding (parent and children) directories,
+    // and checks that all are returned in alphabetical order.
+    #[test]
+    fn test_files_sorted() {
+        get_files(Path::new(".")).expect("Should be able to do file I/O")
+            .iter()
+             // Filter to folders in "."
+            .filter(|pb| pb.is_dir())
+             // Map to all the files in that folder
+            .map(|dir| get_file_names(dir).expect("Should be able to do file I/O"))
+            .for_each(|files| {
+                let mut files_sorted = files.clone();
+                files_sorted.sort();
+                assert_eq!(files, files_sorted);
+            });
+    }
 }
