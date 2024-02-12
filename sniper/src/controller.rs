@@ -62,11 +62,12 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
 }
 
 fn get_file_names(path: &Path) -> Result<Vec<String>> {
-    Ok(get_files(path)?
+    let mut files: Vec<String> = get_files(path)?
         .iter()
         .map(|pb| file_display(pb))
-        .collect()
-    )
+        .collect();
+    files.sort();
+    Ok(files)
 }
 
 /// Convert files to display format
