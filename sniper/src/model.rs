@@ -19,7 +19,7 @@ impl Default for Sniper {
 }
 
 impl Sniper {
-    pub fn new(path: String) -> Self {
+    pub fn new(path_str: String) -> Self {
         let mut new = Self {
             file_list: List::new(
                vec![],
@@ -30,7 +30,7 @@ impl Sniper {
            err_message: String::new(),
         };
 
-        new.update(Message::OpenDir(path.into()))
+        new.update(Message::OpenDir(path_str))
             .expect("Should be able to open current directory");
 
         new

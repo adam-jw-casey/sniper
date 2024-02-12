@@ -55,7 +55,7 @@ fn main() {
     let args = Args::parse();
 
     let mut app = Sniper::new(args.path);
-    app.file_list.on_select(|s| Message::OpenPath(s.into()));
+    app.file_list.on_select(|s| Message::OpenPath(s));
 
     app.run().expect("This should be fine");
 }
