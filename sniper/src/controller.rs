@@ -11,9 +11,9 @@ use anyhow::Result;
 #[derive(PartialEq, Eq, Clone)]
 pub enum Message  {
     Quit,
-    OpenDir(PathBuf),
+    OpenDir(String),
     OpenFile(PathBuf),
-    OpenPath(PathBuf),
+    OpenPath(String),
     Error(String),
 }
 
@@ -36,9 +36,10 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
             model.running = false;
             None
         },
-        Message::OpenPath(path) => {
+        Message::OpenPath(path_str) => {
+            let path = PathBuf::from(path_str.clone());
             Some(if path.is_dir() {
-                Message::OpenDir(path)
+                Message::OpenDir(path_str)
             } else if path.is_file() {
                 Message::OpenFile(path)
             } else {
@@ -49,9 +50,24 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
             opener::open(file_path)?;
             None
         },
-        Message::OpenDir(dir_path) => {
-            set_current_dir(dir_path)?;
-            model.file_list.elems = get_file_names(Path::new("."))?;
+        Message::OpenDir(dir_path_str) => {
+            // Get the string to return to the current directory from the new one.
+            let curr = match dir_path_str.as_ref() {
+                "." => ".".into(),
+                ".." => {
+                    PathBuf::from(".")
+                        .canonicalize()?
+                        .file_name()
+                        .expect("File names should not end in '..'")
+                        .to_string_lossy()
+                        .to_string()
+                },
+                _ => "..".into(),
+            };
+
+            set_current_dir(&dir_path_str)?;
+            model.file_list.elems = get_file_strs(Path::new("."))?;
+            model.file_list.select(&curr);
             None
         },
         Message::Error(err_string) => {
@@ -61,7 +77,7 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
     })
 }
 
-fn get_file_names(path: &Path) -> Result<Vec<String>> {
+fn get_file_strs(path: &Path) -> Result<Vec<String>> {
     let mut files: Vec<String> = get_files(path)?
         .iter()
         .map(|pb| file_display(pb))
@@ -97,7 +113,7 @@ fn get_files(path: &Path) -> Result<Vec<PathBuf>> {
 #[cfg(test)]
 mod tests {
 
-    use super::{get_files, get_file_names};
+    use super::{get_files, get_file_strs};
     use std::path::Path;
 
     // Get all files in this and surrounding (parent and children) directories,
@@ -109,7 +125,7 @@ mod tests {
              // Filter to folders in "."
             .filter(|pb| pb.is_dir())
              // Map to all the files in that folder
-            .map(|dir| get_file_names(dir).expect("Should be able to do file I/O"))
+            .map(|dir| get_file_strs(dir).expect("Should be able to do file I/O"))
             .for_each(|files| {
                 let mut files_sorted = files.clone();
                 files_sorted.sort();
