@@ -1,11 +1,11 @@
 use ratatelm::widgets::List;
 use ratatelm::App;
-use crate::Message;
-use crate::SearchBar;
+
+use crate::{Message, SearchBar, widgets::FileEntry};
 
 #[derive(Debug)]
 pub struct Sniper {
-    pub file_list: List<String, Message>,
+    pub file_list: List<FileEntry, Message>,
     pub mode: SniperMode,
     pub search_bar: SearchBar,
     pub message: String,

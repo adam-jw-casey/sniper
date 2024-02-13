@@ -10,7 +10,7 @@ use view::view;
 mod widgets;
 use widgets::SearchBar;
 
-use ratatelm::App;
+use ratatelm::{App, Widget};
 
 use crossterm::event;
 use ratatui::Frame;
@@ -40,14 +40,14 @@ impl App<Message> for Sniper {
         view(self, f);
     }
 
-    fn handle_key(&self, key: event::KeyEvent) -> Option<Message> {
-        handle_key(self, key)
+    fn handle_key(&self, key: event::KeyEvent) -> Result<Option<Message>> {
+        Ok(handle_key(self, key))
     }
 
-    fn focused_widgets(&mut self) -> Vec<&mut dyn ratatelm::widgets::Widget<Message>> {
+    fn focused_widget(&mut self) -> &mut dyn Widget<Message> {
         match self.mode{
-            SniperMode::Navigating => vec![&mut self.file_list],
-            SniperMode::Searching => vec![&mut self.search_bar],
+            SniperMode::Navigating => &mut self.file_list,
+            SniperMode::Searching =>  &mut self.search_bar,
             SniperMode::Quit => panic!("App should terminate before reaching here"),
         }
     }

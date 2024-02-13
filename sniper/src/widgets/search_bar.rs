@@ -5,6 +5,7 @@ use ratatui::widgets::Paragraph;
 
 use tui_input::{Input, backend::crossterm::EventHandler};
 use crossterm::event::{Event, KeyCode};
+use anyhow::Result;
 
 #[derive(Debug, Clone, Default)]
 pub struct SearchBar(Input);
@@ -23,13 +24,13 @@ impl <Message> Widget <Message> for SearchBar{
         );
     }
 
-    fn handle_key (&mut self, e: crossterm::event::KeyEvent, _on_err: Box<dyn Fn(String) -> Message>) -> Option<EventOrMessage<Message>> {
-        match e.code {
+    fn handle_key (&mut self, e: crossterm::event::KeyEvent) -> Result<Option<EventOrMessage<Message>>> {
+        Ok(match e.code {
             KeyCode::Esc | KeyCode::Enter => Some(EventOrMessage::Event(e)),
             _ => {
                 self.0.handle_event(&Event::Key(e));
                 None
             }
-        }
+        })
     }
 }

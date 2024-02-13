@@ -1,10 +1,10 @@
 use std::path::{PathBuf, Path};
 use std::env::set_current_dir;
-use std::borrow::ToOwned;
 
 use crossterm::event::{self, KeyCode};
 
 use crate::model::{Sniper, SniperMode};
+use crate::widgets::FileEntry;
 
 use anyhow::Result;
 
@@ -61,7 +61,8 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
         },
         Message::OpenDir(dir_path) => {
             set_current_dir(dir_path)?;
-            model.file_list.elems = get_file_names(Path::new("."))?;
+            model.file_list.elems = get_file_entries(Path::new("."))?;
+            model.file_list.clear();
             None
         },
         Message::Error(err_string) => {
@@ -82,24 +83,13 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
     })
 }
 
-fn get_file_names(path: &Path) -> Result<Vec<String>> {
-    let mut files: Vec<String> = get_files(path)?
+fn get_file_entries(path: &Path) -> Result<Vec<FileEntry>> {
+    let mut files: Vec<FileEntry> = get_files(path)?
         .iter()
-        .map(|pb| file_display(pb))
+        .map(|pb| FileEntry::new(pb))
         .collect();
     files.sort();
     Ok(files)
-}
-
-/// Convert files to display format
-//
-//This feels like an impl Display
-fn file_display(path: &Path) -> String {
-    let raw_s = path.to_string_lossy().to_string();
-    raw_s.
-        strip_prefix("./")
-        .map(ToOwned::to_owned)
-        .unwrap_or(raw_s)
 }
 
 /// Impurity:
@@ -118,7 +108,7 @@ fn get_files(path: &Path) -> Result<Vec<PathBuf>> {
 #[cfg(test)]
 mod tests {
 
-    use super::{get_files, get_file_names};
+    use super::{get_files, get_file_entries};
     use std::path::Path;
 
     // Get all files in this and surrounding (parent and children) directories,
@@ -130,7 +120,7 @@ mod tests {
              // Filter to folders in "."
             .filter(|pb| pb.is_dir())
              // Map to all the files in that folder
-            .map(|dir| get_file_names(dir).expect("Should be able to do file I/O"))
+            .map(|dir| get_file_entries(dir).expect("Should be able to do file I/O"))
             .for_each(|files| {
                 let mut files_sorted = files.clone();
                 files_sorted.sort();

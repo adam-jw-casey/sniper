@@ -4,7 +4,7 @@ mod tui;
 /// Contains the `Widget` trait and all customs widgets defined in ratatelm
 pub mod widgets;
 
-use widgets::{Widget, EventOrMessage};
+pub use widgets::{Widget, EventOrMessage};
 
 use anyhow::Result;
 use ratatui::prelude::Frame;
@@ -21,7 +21,7 @@ pub trait App <Message> {
     fn is_running(&self) -> bool;
 
     /// Handle keypress events
-    fn handle_key(&self, key: event::KeyEvent) -> Option<Message>;
+    fn handle_key(&self, key: event::KeyEvent) -> Result<Option<Message>>;
 
     /// Update the model based on a message
     /// # Errors
@@ -35,7 +35,7 @@ pub trait App <Message> {
     /// Get the widget(s) that is(are) focused.
     /// If there are multiple (e.g., a text box inside a frame), the widget on top (in this case,
     /// the text box) is at the beginning of the returned Vec
-    fn focused_widgets(&mut self) -> Vec<&mut dyn Widget<Message>>;
+    fn focused_widget(&mut self) -> &mut dyn Widget<Message>;
 
     /// This function is called when a minor error occurs that the user should be notified of.
     /// It generates a message that will be handled by the application as normal.
@@ -50,46 +50,39 @@ pub trait App <Message> {
             return Ok(None)
         }
 
-        Ok(if let Event::Key(key) = event::read()? {
+       if let Event::Key(key) = event::read()? {
             self.handle_key_event(key)
         } else {
-            None
-        })
+            Ok(None)
+        }
     }
 
     /// Handle key events
     /// First, pass events to any focused widget(s)
     /// If the event is not consumed, pass to `self::handle_key`()
-    fn handle_key_event(&mut self, key: KeyEvent) -> Option<Message> {
-        (key.kind == event::KeyEventKind::Press).then_some({
-            let mut maybe_key = Some(key);
+    fn handle_key_event(&mut self, key: KeyEvent) -> Result<Option<Message>> {
+        Ok(if key.kind == event::KeyEventKind::Press {
+            // Offer the key event to the focused widget
+            let maybe_key = match self.focused_widget().handle_key(key)?{
+                Some(e_or_m) => match e_or_m {
+                    // If the widget's `handle_key` returned a key event, continue
+                    // processing
+                    EventOrMessage::Event(event) => Some(event),
+                    // If the widget's `handle_key` returned a message, we're done
+                    // processing and can return the message.
+                    EventOrMessage::Message(message) => return Ok(Some(message)),
+                },
+                // This would be tidier with `Option::map`, but the closure would not
+                // be able to return from the overall function, which is necessary above.
+                None => None,
+            };
 
-            // Iterate over any focused widget(s), checking in order if they wish to consume the
-            // key event. This is guaranteed to run at least once.
-            for w in &mut self.focused_widgets() {
-                match maybe_key {
-                    Some(key) => {
-                        maybe_key = match w.handle_key(key, Box::new(|s| {Self::on_err(s)})){
-                            Some(e_or_m) => match e_or_m {
-                                // If the widget's `handle_key` returned a key event, continue
-                                // processing
-                                EventOrMessage::Event(event) => Some(event),
-                                // If the widget's `handle_key` returned a message, we're done
-                                // processing and can return the message.
-                                EventOrMessage::Message(message) => return Some(message),
-                            },
-                            // This would be tidier with `Option::map`, but the closure would not
-                            // be able to return from the overall function, which is necessary above.
-                            None => None,
-                        }
-                    },
-                    // If the key event has been consumed, exit the loop
-                    None => break,
-                }
+            // Then give sniper the chance to handle the key event
+            match maybe_key{
+                Some(key) => self.handle_key(key)?,
+                None => None,
             }
-
-            maybe_key.and_then(|key| self.handle_key(key))?
-        })
+        } else { None })
     }
 
     /// Runs the application to termination or panic
