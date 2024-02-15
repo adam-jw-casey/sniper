@@ -37,7 +37,9 @@ pub struct List<Elem, Message> {
     state: ListState,
 }
 
-impl <Elem, Message> List <Elem, Message> {
+impl <Elem, Message> List <Elem, Message> 
+where Elem: PartialEq
+{
     /// Create a new `List` with the passed elements and title
     #[must_use] pub fn new (elems: Vec<Elem>, title: String, select_message: Option<Box<dyn Fn(Elem) -> Message>> ) -> Self {
         let mut state = ListState::default();
@@ -49,6 +51,11 @@ impl <Elem, Message> List <Elem, Message> {
     /// Set a callback for selecting an item
     pub fn on_select (&mut self, select_message: impl Fn(Elem) -> Message + 'static) {
         self.select_message = Some(Box::new(select_message));
+    }
+
+    /// Highligh the matching item
+    pub fn select(&mut self, item: &Elem) {
+        self.state.select(self.elems.iter().position(|i| *item == *i));
     }
 }
 

@@ -11,9 +11,9 @@ use anyhow::Result;
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Message  {
     Quit,
-    OpenDir(PathBuf),
+    OpenDir(String),
     OpenFile(PathBuf),
-    OpenPath(PathBuf),
+    OpenPath(String),
     Error(String),
     EnterMode(SniperMode),
 }
@@ -46,9 +46,10 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
             model.mode = SniperMode::Quit;
             None
         },
-        Message::OpenPath(path) => {
+        Message::OpenPath(path_str) => {
+            let path = PathBuf::from(path_str.clone());
             Some(if path.is_dir() {
-                Message::OpenDir(path)
+                Message::OpenDir(path_str)
             } else if path.is_file() {
                 Message::OpenFile(path)
             } else {
@@ -59,9 +60,24 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
             opener::open(file_path)?;
             None
         },
-        Message::OpenDir(dir_path) => {
-            set_current_dir(dir_path)?;
+        Message::OpenDir(dir_path_str) => {
+            // Get the string to return to the current directory from the new one.
+            let curr = match dir_path_str.as_ref() {
+                "." => ".".into(),
+                ".." => {
+                    PathBuf::from(".")
+                        .canonicalize()?
+                        .file_name()
+                        .expect("File names should not end in '..'")
+                        .to_string_lossy()
+                        .to_string()
+                },
+                _ => "..".into(),
+            };
+
+            set_current_dir(&dir_path_str)?;
             model.file_list.elems = get_file_entries(Path::new("."))?;
+            model.file_list.select(&curr);
             None
         },
         Message::Error(err_string) => {
@@ -106,7 +122,6 @@ fn get_files(path: &Path) -> Result<Vec<PathBuf>> {
 
 #[cfg(test)]
 mod tests {
-
     use super::{get_files, get_file_entries};
     use std::path::Path;
 
