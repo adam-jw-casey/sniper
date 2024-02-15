@@ -21,11 +21,15 @@ pub trait App <Message> {
     fn is_running(&self) -> bool;
 
     /// Handle keypress events
+    ///
+    /// # Errors
+    /// This is implemented by the user. Errors should be passed through to the caller.
     fn handle_key(&self, key: event::KeyEvent) -> Result<Option<Message>>;
 
     /// Update the model based on a message
+    ///
     /// # Errors
-    /// This is implemented by the user.
+    /// This is implemented by the user. Errors should be passed through to the caller.
     fn update(&mut self, msg: Message) -> Result<Option<Message>>;
 
     /// Render the tui based on the model
@@ -41,25 +45,46 @@ pub trait App <Message> {
     /// It generates a message that will be handled by the application as normal.
     fn on_err(s: String) -> Message;
 
-    /// Convert Event to Message
+    /// Updates the app state based on key events, using the user-implemented `update` method.
     ///
     /// # Errors
-    /// Returns `Err` when unable to read event
-    fn handle_event(&mut self) -> Result<Option<Message>> {
-        if !event::poll(Duration::from_millis(250))? {
-            return Ok(None)
+    /// Passes through I/O errors from crossterm, and any errors that happen during event handling.
+    fn handle_event(&mut self, event: Event) -> Result<()> {
+        if let Event::Key(key_event) = event {
+            let mut current_msg = self.handle_key_event(key_event)?;
+
+            // Process updates as long as they return a non-None message
+            while let Some(msg) = current_msg {
+                current_msg = self
+                    .update(msg)
+                    .unwrap_or_else(|e| Some(Self::on_err(e.to_string())));
+            }
         }
 
-       if let Event::Key(key) = event::read()? {
-            self.handle_key_event(key)
-        } else {
-            Ok(None)
-        }
+        Ok(())
+    }
+
+    /// Polls for crossterm events. If a key event is found, returns it.
+    /// Waits for up to 250 ms for an event to occur.
+    ///
+    /// # Errors
+    /// Passes through I/O errors from crossterm
+    fn get_event() -> Result<Option<Event>> {
+        Ok(
+            if event::poll(Duration::from_millis(250))? {
+                Some(event::read()?)
+            } else {
+                None
+            }
+        )
     }
 
     /// Handle key events
     /// First, pass events to any focused widget(s)
     /// If the event is not consumed, pass to `self::handle_key`()
+    ///
+    /// # Errors
+    /// Passes through errors from the user-implemented `handle_key`
     fn handle_key_event(&mut self, key: KeyEvent) -> Result<Option<Message>> {
         Ok(if key.kind == event::KeyEventKind::Press {
             // Offer the key event to the focused widget
@@ -99,14 +124,8 @@ pub trait App <Message> {
             terminal.draw(|f| self.view(f))?;
 
             // Handle events and map to a Message
-            let mut current_msg = self.handle_event()?;
-
-            // Process updates as long as they return a non-None message
-            while current_msg.is_some() {
-                current_msg = self
-                    // The unwrap is ok because we've already checked this is some
-                    .update(current_msg.unwrap())
-                    .unwrap_or_else(|e| Some(Self::on_err(e.to_string())));
+            if let Some(event) = Self::get_event()?{
+                self.handle_event(event)?;
             }
         }
 
