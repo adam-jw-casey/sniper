@@ -62,7 +62,6 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
         Message::OpenDir(dir_path) => {
             set_current_dir(dir_path)?;
             model.file_list.elems = get_file_entries(Path::new("."))?;
-            model.file_list.clear();
             None
         },
         Message::Error(err_string) => {

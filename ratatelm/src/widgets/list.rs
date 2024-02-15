@@ -51,11 +51,6 @@ impl <Elem, Message> List <Elem, Message> {
     pub fn on_select (&mut self, select_message: impl Fn(Elem) -> Message + 'static) {
         self.select_message = Some(Box::new(select_message));
     }
-
-    /// Clears the selected list item
-    pub fn clear(&mut self) {
-        self.state.select(None);
-    }
 }
 
 impl <Elem, Message> Widget<Message> for List<Elem, Message>
