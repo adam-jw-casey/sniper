@@ -19,6 +19,7 @@ use crossterm::event::{KeyEvent, KeyCode};
 use anyhow::Result;
 
 use std::cmp::min;
+use std::io::{Error, ErrorKind};
 
 #[derive(Default)]
 /// This `Widget` can be used to display list of items.
@@ -39,12 +40,10 @@ pub struct List<Elem, Message> {
 impl <Elem, Message> List <Elem, Message> {
     /// Create a new `List` with the passed elements and title
     #[must_use] pub fn new (elems: Vec<Elem>, title: String, select_message: Option<Box<dyn Fn(Elem) -> Message>> ) -> Self {
-        Self {
-            elems,
-            title,
-            state: ListState::default(),
-            select_message,
-        }
+        let mut state = ListState::default();
+        state.select(Some(0));
+
+        Self { elems, title, select_message, state }
     }
 
     /// Set a callback for selecting an item
@@ -103,7 +102,7 @@ for<'a> Elem: Clone + Into<ListItem<'a>> + Widget<Message>
                         // If nothing is selected, warn the user if possible
                         self.state.selected().map_or_else(
                             // If there is no defined error handler, print with the dbg! macro
-                            || Err(std::io::Error::new(std::io::ErrorKind::NotFound, "No item selected")),
+                            || Err(Error::new(ErrorKind::NotFound, "No item selected")),
                             |index| Ok(Some(EventOrMessage::Message(select(self.elems[index].clone())))),
                         )?
                     },
