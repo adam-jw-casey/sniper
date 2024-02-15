@@ -45,6 +45,8 @@ impl Sniper {
            message: String::new(),
         };
 
+        new.file_list.on_select(|s| Message::OpenPath(s.into()));
+
         new.update(Message::OpenDir(path.into()))
             .expect("Should be able to open current directory");
 

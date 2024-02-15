@@ -8,7 +8,7 @@ use crate::widgets::FileEntry;
 
 use anyhow::Result;
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Message  {
     Quit,
     OpenDir(PathBuf),

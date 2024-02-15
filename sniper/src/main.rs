@@ -58,11 +58,39 @@ impl App<Message> for Sniper {
 }
 
 fn main() {
-
     let args = Args::parse();
 
     let mut app = Sniper::new(args.path);
-    app.file_list.on_select(|s| Message::OpenPath(s.into()));
 
     app.run().expect("This should be fine");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Sniper;
+    use ratatelm::App;
+    use crossterm::event::{Event, KeyEvent, KeyCode, KeyModifiers};
+
+    // This test addresses an issue that occured where the selection cursor was on the nth file/dir
+    // in a directory, and the dir was changed to. The target dir has fewer items that source, so
+    // the cursor is now at an invalid index
+    #[test]
+    fn test_change_dir_fewer_files_in_target_than_previous_selection_does_not_panic() {
+        let mut app = Sniper::new("./test".into()); // This is a test directory with a known file structure
+
+        let down = Event::Key(KeyEvent::new(KeyCode::Down, KeyModifiers::empty()));
+
+        // The dir has ., .., two files, then a subdir
+        // This scrolls down to the subdir
+        app.handle_event(down.clone()).unwrap();
+        app.handle_event(down.clone()).unwrap();
+        app.handle_event(down.clone()).unwrap();
+        app.handle_event(down.clone()).unwrap();
+
+        let enter = Event::Key(KeyEvent::new(KeyCode::Enter, KeyModifiers::empty()));
+        app.handle_event(enter).unwrap();
+
+        // This line should not panic
+        app.handle_event(down).unwrap();
+    }
 }
