@@ -9,6 +9,8 @@ use ratatui::prelude::*;
 use std::{io::stdout, panic};
 use anyhow::Result;
 
+use crate::dump_logs;
+
 pub fn init_terminal() -> Result<Terminal<impl Backend>> {
     enable_raw_mode()?;
     stdout().execute(EnterAlternateScreen)?;
@@ -27,6 +29,8 @@ pub fn install_panic_hook() {
     panic::set_hook(Box::new(move |panic_info| {
         stdout().execute(LeaveAlternateScreen).unwrap();
         disable_raw_mode().unwrap();
+        #[cfg(debug_assertions)]
+        dump_logs();
         original_hook(panic_info);
     }));
 }

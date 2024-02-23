@@ -12,6 +12,37 @@ use ratatui::prelude::Frame;
 use crossterm::event::{self, Event, KeyEvent};
 use std::time::Duration;
 
+// TODO these should be #cfg[(debug_assertions)]
+use std::sync::Mutex;
+lazy_static::lazy_static! {
+    static ref LOGS: Mutex<Vec<Event>> = Vec::new().into();
+
+    static ref LOGFILE_NAME: Mutex<String> = {
+        let mut sys = sysinfo::System::new();
+        sys.refresh_all();
+
+        format!(
+            "./logs/{}.log",
+            sys
+                .process(sysinfo::get_current_pid().expect("Should be able to current current pid"))
+                .expect("Should be able to get current process")
+                .start_time()
+        )
+    }.into();
+}
+
+/// # Panics
+/// Panics if unable to write to file or access system process information 
+pub fn dump_logs() { // TODO this shouldn't actually be public beyond the crate
+    std::fs::write(
+        LOGFILE_NAME
+            .lock()
+            .expect("The logfile name should have been initialized and not yet consumed")
+            .clone(),
+        format!("{:#?}", LOGS.lock().unwrap())
+    ).expect("Should be able to write to file");
+}
+
 /// The `App` trait is the entry point to a `ratatelm` application.
 ///
 /// To use, implement `App` for your type, then, in you main function, initialize your `App` and
@@ -50,6 +81,7 @@ pub trait App <Message> {
     /// # Errors
     /// Passes through I/O errors from crossterm, and any errors that happen during event handling.
     fn handle_event(&mut self, event: Event) -> Result<()> {
+
         if let Event::Key(key_event) = event {
             let mut current_msg = self.handle_key_event(key_event)?;
 
@@ -115,6 +147,7 @@ pub trait App <Message> {
     /// # Errors
     /// Passes through errors from `self.view()` and `self.handle_event()`
     fn run (&mut self) -> Result<()>{
+
         tui::install_panic_hook();
         let mut terminal = tui::init_terminal()
             .expect("Should be able to initialize terminal");
@@ -125,12 +158,31 @@ pub trait App <Message> {
 
             // Handle events and map to a Message
             if let Some(event) = Self::get_event()?{
+                #[cfg(debug_assertions)] {
+                    log(&event);
+                }
+
                 self.handle_event(event)?;
             }
         }
 
         tui::restore_terminal()?;
 
+        #[cfg(debug_assertions)]
+        dump_logs();
+
         Ok(())
     }
+}
+
+/// Records the event to a logfile for use in later debugging
+#[cfg(debug_assertions)]
+fn log(event: &Event) {
+    LOGS.lock().unwrap().push(event.clone());
+}
+
+/// Reads the next event back from the logfile
+#[cfg(debug_assertions)]
+#[must_use] fn delog() -> Event {
+    todo!()
 }
