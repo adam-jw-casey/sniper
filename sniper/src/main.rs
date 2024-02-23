@@ -73,7 +73,7 @@ mod tests {
 
     // This test addresses an issue that occured where the selection cursor was on the nth file/dir
     // in a directory, and the dir was changed to. The target dir has fewer items that source, so
-    // the cursor is now at an invalid index
+    // the cursor is now at an invalid index.
     #[test]
     fn test_change_dir_fewer_files_in_target_than_previous_selection_does_not_panic() {
         let mut app = Sniper::new("./test".into()); // This is a test directory with a known file structure
