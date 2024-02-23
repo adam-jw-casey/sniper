@@ -1,7 +1,6 @@
 use crossterm::event::Event;
-
-// TODO these should be #cfg[(debug_assertions)]
 use std::sync::Mutex;
+
 lazy_static::lazy_static! {
     static ref LOGS: Mutex<Vec<Event>> = Vec::new().into();
 
@@ -13,7 +12,7 @@ lazy_static::lazy_static! {
             "./logs/{}.log",
             sys
                 .process(sysinfo::get_current_pid().expect("Should be able to current current pid"))
-                .expect("Should be able to get current process")
+                .expect("Should be able to get current process.")
                 .start_time()
         )
     }.into();
@@ -21,24 +20,29 @@ lazy_static::lazy_static! {
 
 /// # Panics
 /// Panics if unable to write to file or access system process information 
-pub fn dump_logs() { // TODO this shouldn't actually be public beyond the crate
+pub fn dump_logs() {
     std::fs::write(
         LOGFILE_NAME
             .lock()
-            .expect("The logfile name should have been initialized and not yet consumed")
+            .expect("The logfile name should have been initialized and not yet consumed.")
             .clone(),
-        format!("{:#?}", LOGS.lock().unwrap())
-    ).expect("Should be able to write to file");
+        serde_json::ser::to_string(&*LOGS.lock().expect("Should be able to get lock on log mutex."))
+            .expect("Should be able to serialize logs")
+    ).expect("Should be able to write to file.");
 }
 
 /// Records the event to a logfile for use in later debugging
-#[cfg(debug_assertions)]
 pub fn log(event: &Event) {
-    LOGS.lock().unwrap().push(event.clone());
+    LOGS
+        .lock()
+        .expect("Should be able to get lock on log mutex.")
+        .push(event.clone());
 }
 
 /// Reads the next event back from the logfile
-#[cfg(debug_assertions)]
-#[must_use] pub fn delog() -> Event {
-    todo!()
+#[must_use] pub fn delog (path: &std::path::Path) -> Vec<Event> {
+    let file = std::fs::File::open(path).expect("Should be able to open logfile.");
+    let reader = std::io::BufReader::new(file);
+
+    serde_json::from_reader(reader).expect("Should be able to deserialize logfile.")
 }

@@ -1,6 +1,7 @@
 //! `ratatelm` is an [elm](https://guide.elm-lang.org/architecture/)-like framework based on [ratatui](https://ratatui.rs/)
 
 mod tui;
+#[cfg(debug_assertions)]
 mod log;
 /// Contains the `Widget` trait and all customs widgets defined in ratatelm
 pub mod widgets;
@@ -140,6 +141,31 @@ pub trait App <Message> {
 
         #[cfg(debug_assertions)]
         log::dump_logs();
+
+        Ok(())
+    }
+
+    /// Like `run`, but consumes events from a logfile rather than getting them from crossterm
+    ///
+    /// # Errors
+    /// Passes through errors from `view` and `handle_event`
+    fn run_from_logs(&mut self, logfile_name: String) -> Result<()> {
+
+        tui::install_panic_hook();
+        let mut terminal = tui::init_terminal()
+            .expect("Should be able to initialize terminal");
+
+        let events: Vec<Event> = log::delog(std::path::Path::new(&logfile_name));
+
+        for event in events {
+            // Render the current view
+            terminal.draw(|f| self.view(f))?;
+
+            // Handle events and map to a Message
+            self.handle_event(event)?;
+        }
+
+        tui::restore_terminal()?;
 
         Ok(())
     }

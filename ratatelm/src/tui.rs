@@ -9,8 +9,6 @@ use ratatui::prelude::*;
 use std::{io::stdout, panic};
 use anyhow::Result;
 
-use crate::log::dump_logs;
-
 pub fn init_terminal() -> Result<Terminal<impl Backend>> {
     enable_raw_mode()?;
     stdout().execute(EnterAlternateScreen)?;
@@ -32,7 +30,7 @@ pub fn install_panic_hook() {
         restore_terminal().unwrap();
         // TODO dealing with logging really shouldn't be in the tui module
         #[cfg(debug_assertions)]
-        dump_logs();
+        crate::log::dump_logs();
         original_hook(panic_info);
     }));
 }
