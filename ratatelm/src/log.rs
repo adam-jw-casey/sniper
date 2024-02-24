@@ -9,6 +9,7 @@ lazy_static::lazy_static! {
         sys.refresh_all();
 
         format!(
+            // TODO this fails when the application launches in a dir without the logs folder
             "./logs/{}.log",
             sys
                 .process(sysinfo::get_current_pid().expect("Should be able to current current pid"))
