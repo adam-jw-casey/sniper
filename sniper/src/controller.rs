@@ -98,6 +98,8 @@ pub fn update (model: &mut Sniper, msg: Message) -> Result<Option<Message>> {
     })
 }
 
+/// Impurity:
+///     `get_files`
 fn get_file_entries(path: &Path) -> Result<Vec<FileEntry>> {
     let mut files: Vec<FileEntry> = get_files(path)?
         .iter()
@@ -113,11 +115,11 @@ fn get_file_entries(path: &Path) -> Result<Vec<FileEntry>> {
 fn get_files(path: &Path) -> Result<Vec<PathBuf>> {
     [".".into(), "..".into()].map(Ok)
         .into_iter()
-            .chain(
-                path.read_dir()?
-                .map(|entry| Ok(entry?.path()))
-                )
-            .collect()
+        .chain(
+            path.read_dir()?
+            .map(|entry| Ok(entry?.path()))
+        )
+        .collect()
 }
 
 #[cfg(test)]
@@ -129,7 +131,7 @@ mod tests {
     // and checks that all are returned in alphabetical order.
     #[test]
     fn test_files_sorted() {
-        get_files(Path::new(".")).expect("Should be able to do file I/O")
+        get_files(Path::new("./test")).expect("Should be able to do file I/O")
             .iter()
              // Filter to folders in "."
             .filter(|pb| pb.is_dir())
