@@ -9,6 +9,7 @@ edition = "2021"
 anyhow = "1.0.79"
 clap = { version = "4.5.0", features = ["unstable-doc", "derive"] }
 crossterm = "0.27.0"
+lazy_static = "1.4.0"
 memchr = "2.7.1"
 opener = "0.6.1"
 ratatelm = {path = "../ratatelm"}

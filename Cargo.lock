@@ -748,6 +748,7 @@ dependencies = [
  "anyhow",
  "clap",
  "crossterm",
+ "lazy_static",
  "memchr",
  "opener",
  "ratatelm",

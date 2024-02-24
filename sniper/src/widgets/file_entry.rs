@@ -7,6 +7,14 @@ use anyhow::Result;
 
 use std::path::{PathBuf, Path};
 
+lazy_static::lazy_static!{
+    static ref LEAD: String = {
+        let mut lead = ".".to_string();
+        lead.push(std::path::MAIN_SEPARATOR);
+        lead
+    };
+}
+
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct FileEntry {
     path: PathBuf
@@ -45,8 +53,8 @@ impl PartialOrd for FileEntry {
 impl From<&FileEntry> for String {
     fn from(val: &FileEntry) -> Self {
         let raw_s = val.path.to_string_lossy().to_string();
-        raw_s.
-            strip_prefix("./")
+        raw_s
+            .strip_prefix(&*LEAD)
             .map(ToOwned::to_owned)
             .unwrap_or(raw_s)
     }
@@ -67,5 +75,23 @@ impl <'a> From<FileEntry> for ListItem<'a> {
 impl From<FileEntry> for PathBuf {
     fn from(val: FileEntry) -> Self {
         val.path
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Path, FileEntry, LEAD};
+
+    /// Ensures that no "./" or ".\" is present on the front of a file path
+    #[test]
+    fn test_prefix_stripped () {
+        let this = ".";
+        let parent = "..";
+        let mut child: String = LEAD.clone();
+        child.push_str("foo");
+
+        for f in [this, parent, &child].map(|f| FileEntry::new(Path::new(f))) {
+            assert!(!f.to_string().starts_with(&*LEAD));
+        }
     }
 }
