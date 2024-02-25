@@ -8,6 +8,7 @@ use ratatui::prelude::{
 };
 
 use crossterm::event::KeyEvent;
+use anyhow::Result;
 
 /// Simple wrapper for either a `KeyEvent` or user-defined Message type
 pub enum EventOrMessage <Message> {
@@ -22,10 +23,14 @@ pub enum EventOrMessage <Message> {
 pub trait Widget <Message> {
     /// Render the widget to the screen and update internal state as necessary
     fn render(&mut self, area: Rect, frame: &mut Frame);
+
     /// Handle keypress events. If there is no reason to consume the event, it should be returned
     /// wrapped in `Some`.
     /// Otherwise, `None` should be returned
-    fn handle_key (&mut self, e: KeyEvent, on_err: Box<dyn Fn(String) -> Message>) -> Option<EventOrMessage<Message>>;
+    ///
+    /// # Errors
+    /// Any errors that occur should be propagated
+    fn handle_key (&mut self, e: KeyEvent) -> Result<Option<EventOrMessage<Message>>>;
 }
 
 /// This is a stateless implementation of the custom widget trait
@@ -36,5 +41,5 @@ impl <T: BaseWidget + Clone, Message> Widget <Message> for T {
     }
 
     /// Stateless, so this is noop
-    fn handle_key (&mut self, _: KeyEvent, _on_err: Box<dyn Fn(String) -> Message>) -> Option<EventOrMessage<Message>> { None }
+    fn handle_key (&mut self, _: KeyEvent) -> Result<Option<EventOrMessage<Message>>> { Ok(None) }
 }

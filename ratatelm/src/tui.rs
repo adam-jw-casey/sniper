@@ -22,11 +22,15 @@ pub fn restore_terminal() -> Result<()> {
     Ok(())
 }
 
+
+
 pub fn install_panic_hook() {
     let original_hook = panic::take_hook();
     panic::set_hook(Box::new(move |panic_info| {
-        stdout().execute(LeaveAlternateScreen).unwrap();
-        disable_raw_mode().unwrap();
+        restore_terminal().unwrap();
+        // TODO dealing with logging really shouldn't be in the tui module
+        #[cfg(debug_assertions)]
+        crate::log::dump_logs();
         original_hook(panic_info);
     }));
 }

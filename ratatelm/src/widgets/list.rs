@@ -16,8 +16,10 @@ use ratatui::widgets::{
 };
 
 use crossterm::event::{KeyEvent, KeyCode};
+use anyhow::Result;
 
 use std::cmp::min;
+use std::io::{Error, ErrorKind};
 
 #[derive(Default)]
 /// This `Widget` can be used to display list of items.
@@ -36,16 +38,14 @@ pub struct List<Elem, Message> {
 }
 
 impl <Elem, Message> List <Elem, Message> 
-where Elem: Eq
+where Elem: PartialEq
 {
     /// Create a new `List` with the passed elements and title
     #[must_use] pub fn new (elems: Vec<Elem>, title: String, select_message: Option<Box<dyn Fn(Elem) -> Message>> ) -> Self {
-        Self {
-            elems,
-            title,
-            state: ListState::default(),
-            select_message,
-        }
+        let mut state = ListState::default();
+        state.select(Some(0));
+
+        Self { elems, title, select_message, state }
     }
 
     /// Set a callback for selecting an item
@@ -59,9 +59,9 @@ where Elem: Eq
     }
 }
 
-impl <Elem, Message> Widget<Message> for List <Elem, Message>
+impl <Elem, Message> Widget<Message> for List<Elem, Message>
 where
-for<'a> Elem: Into<ListItem<'a>> + Clone
+for<'a> Elem: Clone + Into<ListItem<'a>> + Widget<Message>
 {
     fn render(&mut self, area: Rect, frame: &mut Frame) {
         frame.render_stateful_widget(
@@ -74,8 +74,16 @@ for<'a> Elem: Into<ListItem<'a>> + Clone
         );
     }
 
-    fn handle_key (&mut self, e: KeyEvent, on_err: Box<dyn Fn(String) -> Message>) -> Option<EventOrMessage<Message>> {
-        match e.code {
+    fn handle_key (&mut self, mut key: KeyEvent) -> Result<Option<EventOrMessage<Message>>> {
+        if let Some(index) = self.state.selected() {
+            key = match self.elems[index].handle_key(key)? {
+                Some(EventOrMessage::Event(key)) => key,
+                Some(EventOrMessage::Message(m)) => return Ok(Some(EventOrMessage::Message(m))),
+                None => return Ok(None),
+            };
+        }
+
+        Ok(match key.code {
             KeyCode::Up => {
                 let selected = self.state.selected_mut();
                 match selected {
@@ -96,17 +104,20 @@ for<'a> Elem: Into<ListItem<'a>> + Clone
             },
             KeyCode::Enter => {
                 // If there is no selection handler, nothing to do
-                self.select_message.as_ref().and_then(
-                    // If nothing is selected, warn the user if possible
-                    |select| self.state.selected().map_or_else(
-                        // If there is no defined error handler, print with the dbg! macro
-                        || Some(EventOrMessage::Message(on_err("No item selected".into()))),
-                        |index| Some(EventOrMessage::Message(select(self.elems[index].clone()))),
-                    )
-                )
+                match self.select_message.as_ref() {
+                    Some(select) => {
+                        // If nothing is selected, warn the user if possible
+                        self.state.selected().map_or_else(
+                            // If there is no defined error handler, print with the dbg! macro
+                            || Err(Error::new(ErrorKind::NotFound, "No item selected")),
+                            |index| Ok(Some(EventOrMessage::Message(select(self.elems[index].clone())))),
+                        )?
+                    },
+                    None => None,
+                }
             }
-            _ => Some(EventOrMessage::Event(e)) // Let the next widget handle the keypress
-        }
+            _ => Some(EventOrMessage::Event(key)) // Let the next widget handle the keypress
+        })
     }
 }
 
