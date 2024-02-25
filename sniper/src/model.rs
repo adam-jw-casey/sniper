@@ -16,7 +16,6 @@ pub struct Sniper {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum SniperMode {
     /// The user is navigating through directories.
-    /// The variant parameter is a message string.
     Navigating,
     /// The user is searching using the bottom bar.
     Searching,
